@@ -39,8 +39,7 @@
         <div id="owner-tools" class="owner-tools" hidden>
           <h3>Nur fur Besitzerin</h3>
           <p id="owner-email"></p>
-          <p>Hier kannst du ein neues Projekt hinzufugen.</p>
-          <button id="toggle-project-form" class="btn">Neues Projekt hochladen</button>
+          <p>Neues Projekt uber das Plus unten rechts hinzufugen.</p>
           <button id="logout-btn" class="btn btn-ghost" type="button">Abmelden</button>
 
           <form id="project-form" class="project-form" hidden>
@@ -93,7 +92,7 @@
           </form>
         </div>
 
-        <div id="login-box" class="owner-tools">
+        <div id="login-box" class="owner-tools" hidden>
           <h3>Projektverwaltung Login</h3>
           <p>Nur deine autorisierten E-Mails konnen neue Projekte hochladen.</p>
           <form id="login-form" class="project-form">
@@ -111,6 +110,16 @@
         <a class="btn" href="index.html#start">Zuruck zur Startseite</a>
       </section>
     </main>
+
+    <button
+      type="button"
+      id="fab-add-project"
+      class="fab-add-project"
+      aria-label="Neues Projekt hinzufugen"
+      title="Neues Projekt hinzufugen"
+    >
+      +
+    </button>
 
     <footer class="footer">
       <p>&copy; 2026 Jenny Karelle Nanseu Tchatchouang. Alle Rechte vorbehalten.</p>
@@ -159,6 +168,19 @@
       ];
 
       let editingProjectId = null;
+
+      function closeLoginPanel() {
+        const loginBox = document.getElementById("login-box");
+        if (!loginBox) return;
+        if (localStorage.getItem(OWNER_STORAGE_KEY) === "true") return;
+        loginBox.hidden = true;
+      }
+
+      function openLoginPanel() {
+        const loginBox = document.getElementById("login-box");
+        if (!loginBox) return;
+        loginBox.hidden = false;
+      }
 
       function formatDate(dateIso) {
         const date = new Date(dateIso);
@@ -257,7 +279,7 @@
               ">Github</button>" +
               '<button type="button" class="project-menu-item" data-action="bearbeitung" data-id="' +
               escapeHtml(project.id) +
-              '">Bearbeitung</button>' +
+              '">Projekt bearbeiten</button>' +
               "</div>" +
               "</div>";
 
@@ -282,12 +304,12 @@
         const loginBox = document.getElementById("login-box");
         const ownerEmail = document.getElementById("owner-email");
         ownerTools.hidden = !isOwner;
-        loginBox.hidden = isOwner;
         ownerEmail.textContent = isOwner && email ? "Angemeldet als: " + email : "";
+        loginBox.hidden = true;
       }
 
       function initForm() {
-        const toggleButton = document.getElementById("toggle-project-form");
+        const fabAdd = document.getElementById("fab-add-project");
         const form = document.getElementById("project-form");
         const idInput = document.getElementById("project-id");
         const saveButton = document.getElementById("save-project-btn");
@@ -302,11 +324,37 @@
         const list = document.getElementById("projects-list");
         const loginBox = document.getElementById("login-box");
 
-        if (!toggleButton || !form) return;
+        if (!form) return;
 
-        toggleButton.addEventListener("click", function () {
-          form.hidden = !form.hidden;
-        });
+        function openNewProjectForm() {
+          editingProjectId = null;
+          idInput.value = "";
+          saveButton.textContent = "Projekt speichern";
+          cancelEditButton.hidden = true;
+          deleteProjectButton.hidden = true;
+          form.reset();
+          imageInput.value = "";
+          form.hidden = false;
+          form.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        if (fabAdd) {
+          fabAdd.addEventListener("click", function (event) {
+            event.stopPropagation();
+            const isOwner = localStorage.getItem(OWNER_STORAGE_KEY) === "true";
+            if (!isOwner) {
+              openLoginPanel();
+              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
+              const loginMessage = document.getElementById("login-message");
+              if (loginMessage) {
+                loginMessage.textContent =
+                  "Bitte zuerst mit deiner autorisierten E-Mail anmelden.";
+              }
+              return;
+            }
+            openNewProjectForm();
+          });
+        }
 
         function fileToDataUrl(file) {
           return new Promise((resolve, reject) => {
@@ -437,9 +485,15 @@
           }
 
           if (action === "bearbeitung") {
+            event.stopPropagation();
             const isOwner = localStorage.getItem(OWNER_STORAGE_KEY) === "true";
+            const thisMenu = document.getElementById("menu-" + projectId);
+            if (thisMenu) {
+              thisMenu.hidden = true;
+            }
             if (!isOwner) {
-              loginBox.scrollIntoView({ behavior: "smooth", block: "start" });
+              openLoginPanel();
+              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
               const loginMessage = document.getElementById("login-message");
               if (loginMessage) {
                 loginMessage.textContent =
@@ -461,16 +515,15 @@
             deleteProjectButton.hidden = false;
             form.hidden = false;
             form.scrollIntoView({ behavior: "smooth", block: "start" });
-            const thisMenu = document.getElementById("menu-" + projectId);
-            if (thisMenu) {
-              thisMenu.hidden = true;
-            }
           }
         });
 
         document.addEventListener("click", function (event) {
           const target = event.target;
           if (!(target instanceof HTMLElement)) return;
+          if (!target.closest("#login-box")) {
+            closeLoginPanel();
+          }
           const clickedInsideMenu = target.closest(".project-menu-wrapper");
           if (clickedInsideMenu) return;
           const allMenus = list.querySelectorAll(".project-menu");
@@ -483,6 +536,7 @@
 
         document.addEventListener("keydown", function (event) {
           if (event.key !== "Escape") return;
+          closeLoginPanel();
           const allMenus = list.querySelectorAll(".project-menu");
           allMenus.forEach((menuElement) => {
             if (menuElement instanceof HTMLElement) {
@@ -517,12 +571,14 @@
           localStorage.setItem(OWNER_EMAIL_KEY, email);
           toggleOwnerUi(true, email);
           loginForm.reset();
+          closeLoginPanel();
         });
 
         logoutBtn.addEventListener("click", function () {
           localStorage.removeItem(OWNER_STORAGE_KEY);
           localStorage.removeItem(OWNER_EMAIL_KEY);
           toggleOwnerUi(false, "");
+          closeLoginPanel();
         });
       }
 

@@ -17,6 +17,9 @@
           <input id="private-password" type="password" required />
           <button type="submit" class="btn">Offnen</button>
         </form>
+        <p class="private-login-home">
+          <a href="index.html" class="btn btn-ghost">Zur Startseite</a>
+        </p>
         <p id="private-login-message" class="project-date"></p>
       </section>
 
@@ -67,12 +70,23 @@
         content.hidden = !opened;
       }
 
+      function clearPrivateSession() {
+        sessionStorage.removeItem(PRIVATE_ACCESS_KEY);
+        try {
+          localStorage.removeItem(PRIVATE_ACCESS_KEY);
+        } catch (_) {}
+      }
+
       function initPrivatePage() {
         const form = document.getElementById("private-login-form");
         const message = document.getElementById("private-login-message");
         const logout = document.getElementById("private-logout");
 
-        const hasAccess = localStorage.getItem(PRIVATE_ACCESS_KEY) === "true";
+        try {
+          localStorage.removeItem(PRIVATE_ACCESS_KEY);
+        } catch (_) {}
+
+        const hasAccess = sessionStorage.getItem(PRIVATE_ACCESS_KEY) === "true";
         setPrivateVisibility(hasAccess);
 
         form.addEventListener("submit", function (event) {
@@ -83,14 +97,24 @@
             message.textContent = "Falsches Passwort.";
             return;
           }
-          localStorage.setItem(PRIVATE_ACCESS_KEY, "true");
+          sessionStorage.setItem(PRIVATE_ACCESS_KEY, "true");
           setPrivateVisibility(true);
           form.reset();
         });
 
         logout.addEventListener("click", function () {
-          localStorage.removeItem(PRIVATE_ACCESS_KEY);
+          clearPrivateSession();
           setPrivateVisibility(false);
+        });
+
+        window.addEventListener("pagehide", clearPrivateSession);
+
+        window.addEventListener("pageshow", function (event) {
+          if (!event.persisted) {
+            return;
+          }
+          const ok = sessionStorage.getItem(PRIVATE_ACCESS_KEY) === "true";
+          setPrivateVisibility(ok);
         });
       }
 

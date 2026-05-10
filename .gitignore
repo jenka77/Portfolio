@@ -1,0 +1,5 @@
+# Copie locale du dépôt — ne pas versionner
+portfolio-/
+
+__pycache__/
+*.py[cod]
