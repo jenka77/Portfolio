@@ -1,0 +1,34 @@
+# 🚀 Personal Portfolio - Jenny Karelle
+
+Willkommen in meinem Portfolio-Repository! Dieses Projekt ist mehr als nur eine Webseite – es ist die Dokumentation meiner Reise von der klassischen Informatik hin zur **3D-Virtualisierung** und Softwareentwicklung für Architektur und Bauingenieurwesen.
+
+## 🌟 Über das Projekt
+Dieses Portfolio wurde entwickelt, um meine aktuellen akademischen Projekte  zu präsentieren und gleichzeitig meine Ambitionen im Bereich der visuellen Informatik zu unterstreichen. 
+
+Es beinhaltet einen **geschützten Privatbereich**, in dem Projekte dynamisch verwaltet, hinzugefügt und bearbeitet werden können – ein Beweis für meine Fähigkeiten in der Front-End-Logik und Datenverwaltung.
+
+## 🛠️ Tech Stack
+* **Frontend:** HTML5, CSS3 (Modern Dark Design), JavaScript (ES6+).
+* **Logik & Features:** * Benutzerauthentifizierung via JavaScript für den Privatbereich.
+    * Dynamische Projektverwaltung (CRUD-Logik ohne schweres Backend).
+    * Responsives Design für alle Endgeräte.
+* **Tools:** Git, GitHub Pages.
+
+## 📁 Projekt-Highlights
+* **Interaktives Quiz:** Fokus auf User-Interaction und State-Management.
+* **Datenbank-Strukturen:** Effiziente Verwaltung von Informationen (Vorbereitung auf BIM-Systeme).
+* **Web-Plattform:** Fokus auf sauberen Code und intuitive Benutzeroberflächen.
+
+## 🎯 Zukünftige Ziele
+Mein nächster großer Meilenstein ist ein Master in **Visualisierung**. Ich plane, dieses Portfolio bald um folgende Technologien zu erweitern:
+- [ ] Integration von **Three.js** für webbasierte 3D-Modelle.
+- [ ] Erste Prototypen in **Unity / C#**.
+- [ ] Architektur-Visualisierungen mit Blender-Integration.
+
+## 📧 Kontakt
+Wenn du mehr über meine Arbeit erfahren möchtest oder an einer Zusammenarbeit interessiert bist:
+- **LinkedIn:** [www.linkedin.com/in/jenny-nanseu]
+- **E-Mail:** [karelletchatchouang@gmail.com]
+
+---
+*Erstellt mit Leidenschaft für Code und Design von Jenny Karelle Nanseu Tchatchouang.*

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privatbereich | Jenny Karelle</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="section container">
+      <section id="private-login" class="owner-tools">
+        <h2>Privater Zugriff</h2>
+        <p>Dieser Bereich ist nur fur autorisierte Personen.</p>
+        <form id="private-login-form" class="project-form">
+          <label for="private-password">Passwort</label>
+          <input id="private-password" type="password" required />
+          <button type="submit" class="btn">Offnen</button>
+        </form>
+        <p id="private-login-message" class="project-date"></p>
+      </section>
+
+      <section id="private-content" hidden>
+        <h2>Privates Portfolio - Jenny Karelle Nanseu Tchatchouang</h2>
+        <p>
+          Willkommen im privaten Bereich. Hier sind vertraulichere Informationen
+          und Links.
+        </p>
+
+        <div class="cards">
+          <article class="card">
+            <h3>Direkter Kontakt</h3>
+            <p>Telefon: <a href="tel:+4915751032043">+49 1575 1032043</a></p>
+            <p>E-Mail 1: karelletchatchouang@gmail.com</p>
+            <p>E-Mail 2: jenny.karelle.nanseu.tchatchouang@mni.thm.de</p>
+          </article>
+          <article class="card">
+            <h3>Dokumente</h3>
+            <p>
+              <a href="informatikstudentin Lebenslauf.pdf" target="_blank" rel="noopener noreferrer">
+                Lebenslauf offnen
+              </a>
+            </p>
+          </article>
+          <article class="card">
+            <h3>Projekte</h3>
+            <p>
+              <a href="projekte.html">Projektseite offnen</a>
+            </p>
+          </article>
+        </div>
+
+        <button id="private-logout" type="button" class="btn btn-ghost">
+          Sperren
+        </button>
+      </section>
+    </main>
+
+    <script>
+      const PRIVATE_PAGE_PASSWORD = "PrivatJenny2026";
+      const PRIVATE_ACCESS_KEY = "portfolio_private_access";
+
+      function setPrivateVisibility(opened) {
+        const login = document.getElementById("private-login");
+        const content = document.getElementById("private-content");
+        login.hidden = opened;
+        content.hidden = !opened;
+      }
+
+      function initPrivatePage() {
+        const form = document.getElementById("private-login-form");
+        const message = document.getElementById("private-login-message");
+        const logout = document.getElementById("private-logout");
+
+        const hasAccess = localStorage.getItem(PRIVATE_ACCESS_KEY) === "true";
+        setPrivateVisibility(hasAccess);
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          message.textContent = "";
+          const password = document.getElementById("private-password").value;
+          if (password !== PRIVATE_PAGE_PASSWORD) {
+            message.textContent = "Falsches Passwort.";
+            return;
+          }
+          localStorage.setItem(PRIVATE_ACCESS_KEY, "true");
+          setPrivateVisibility(true);
+          form.reset();
+        });
+
+        logout.addEventListener("click", function () {
+          localStorage.removeItem(PRIVATE_ACCESS_KEY);
+          setPrivateVisibility(false);
+        });
+      }
+
+      initPrivatePage();
+    </script>
+  </body>
+</html>

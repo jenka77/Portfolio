@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projekte | Jenny Karelle Nanseu Tchatchouang</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <nav class="nav container">
+        <a href="index.html#start" class="logo">Jenny Karelle</a>
+        <ul class="nav-links">
+          <li><a href="index.html#uber-mich">Uber mich</a></li>
+          <li><a href="index.html#lebenslauf">Lebenslauf</a></li>
+          <li><a href="projekte.html">Projekte</a></li>
+          <li><a href="index.html#kompetenzen">Kompetenzen</a></li>
+          <li><a href="index.html#kontakt">Kontakt</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <section class="section container projects-page">
+        <h2>Projekte und Realisationen</h2>
+        <p>
+          Diese Liste wird automatisch nach Upload-Datum sortiert (neueste
+          zuerst).
+        </p>
+
+        <div id="projects-list" class="cards"></div>
+
+        <div id="owner-tools" class="owner-tools" hidden>
+          <h3>Nur fur Besitzerin</h3>
+          <p id="owner-email"></p>
+          <p>Hier kannst du ein neues Projekt hinzufugen.</p>
+          <button id="toggle-project-form" class="btn">Neues Projekt hochladen</button>
+          <button id="logout-btn" class="btn btn-ghost" type="button">Abmelden</button>
+
+          <form id="project-form" class="project-form" hidden>
+            <input id="project-id" name="id" type="hidden" />
+            <label for="project-title">Titel</label>
+            <input id="project-title" name="title" type="text" required />
+
+            <label for="project-description">Beschreibung</label>
+            <textarea id="project-description" name="description" rows="4" required></textarea>
+
+            <label for="project-link">Projekt-Link (optional)</label>
+            <input
+              id="project-link"
+              name="link"
+              type="url"
+              placeholder="https://..."
+            />
+
+            <label for="project-demo-url">Live Demo URL (optional)</label>
+            <input
+              id="project-demo-url"
+              name="demoUrl"
+              type="url"
+              placeholder="https://..."
+            />
+
+            <label for="project-github-url">Github URL (optional)</label>
+            <input
+              id="project-github-url"
+              name="githubUrl"
+              type="url"
+              placeholder="https://github.com/..."
+            />
+
+            <label for="project-image">Projektbild (optional)</label>
+            <input
+              id="project-image"
+              name="image"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+            />
+
+            <button id="save-project-btn" type="submit" class="btn">Projekt speichern</button>
+            <button id="cancel-edit-btn" type="button" class="btn btn-ghost" hidden>
+              Bearbeitung abbrechen
+            </button>
+            <button id="delete-project-btn" type="button" class="btn btn-ghost" hidden>
+              Dieses Projekt loschen
+            </button>
+          </form>
+        </div>
+
+        <div id="login-box" class="owner-tools">
+          <h3>Projektverwaltung Login</h3>
+          <p>Nur deine autorisierten E-Mails konnen neue Projekte hochladen.</p>
+          <form id="login-form" class="project-form">
+            <label for="login-email">E-Mail</label>
+            <input id="login-email" name="email" type="email" required />
+
+            <label for="login-password">Passwort</label>
+            <input id="login-password" name="password" type="password" required />
+
+            <button type="submit" class="btn">Anmelden</button>
+          </form>
+          <p id="login-message" class="project-date"></p>
+        </div>
+
+        <a class="btn" href="index.html#start">Zuruck zur Startseite</a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>&copy; 2026 Jenny Karelle Nanseu Tchatchouang. Alle Rechte vorbehalten.</p>
+    </footer>
+    <script>
+      const ALLOWED_EMAILS = [
+        "karelletchatchouang@gmail.com",
+        "jenny.karelle.nanseu.tchatchouang@mni.thm.de",
+      ];
+      const FRONTEND_PASSWORD = "JennyPortfolio2026";
+      const OWNER_STORAGE_KEY = "portfolio_owner_mode";
+      const OWNER_EMAIL_KEY = "portfolio_owner_email";
+      const PROJECTS_STORAGE_KEY = "portfolio_projects";
+
+      const defaultProjects = [
+        {
+          title: "Projekt 01 - Portfolio Website",
+          description:
+            "Eine responsive Website mit modernem Design zur Prasentation meiner Person und meiner Arbeiten.",
+          link: "",
+          demoUrl: "",
+          githubUrl: "",
+          imageSrc: "portofolio.jpeg",
+          uploadedAt: "2026-05-01T08:00:00.000Z",
+        },
+        {
+          title: "Projekt 02 - Lernprojekt",
+          description:
+            "Entwicklung eines kleinen Tools, um praktische Erfahrung in HTML, CSS und JavaScript zu vertiefen.",
+          link: "",
+          demoUrl: "",
+          githubUrl: "",
+          imageSrc: "portofoliobild.jpeg",
+          uploadedAt: "2026-04-20T09:30:00.000Z",
+        },
+        {
+          title: "Projekt 03 - Teamarbeit",
+          description:
+            "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung.",
+          link: "",
+          demoUrl: "",
+          githubUrl: "",
+          imageSrc: "WhatsApp Image 2026-05-09 at 09.23.21.jpeg",
+          uploadedAt: "2026-03-28T15:45:00.000Z",
+        },
+      ];
+
+      let editingProjectId = null;
+
+      function formatDate(dateIso) {
+        const date = new Date(dateIso);
+        return date.toLocaleDateString("de-DE", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+
+      function readProjects() {
+        const saved = localStorage.getItem(PROJECTS_STORAGE_KEY);
+        if (!saved) return normalizeProjects(defaultProjects);
+        try {
+          const parsed = JSON.parse(saved);
+          return Array.isArray(parsed) && parsed.length > 0
+            ? normalizeProjects(parsed)
+            : normalizeProjects(defaultProjects);
+        } catch (_error) {
+          return normalizeProjects(defaultProjects);
+        }
+      }
+
+      function saveProjects(projects) {
+        localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+      }
+
+      function normalizeProjects(projects) {
+        return projects.map((project) => {
+          const baseId = project.id || project.uploadedAt || String(Math.random());
+          return {
+            id: String(baseId),
+            title: project.title || "",
+            description: project.description || "",
+            link: project.link || "",
+            demoUrl: project.demoUrl || "",
+            githubUrl: project.githubUrl || "",
+            imageSrc: project.imageSrc || "",
+            imageDataUrl: project.imageDataUrl || "",
+            uploadedAt: project.uploadedAt || new Date().toISOString(),
+          };
+        });
+      }
+
+      function renderProjects() {
+        const list = document.getElementById("projects-list");
+        const projects = readProjects()
+          .slice()
+          .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+
+        list.innerHTML = projects
+          .map((project) => {
+            const imageSource = project.imageDataUrl || project.imageSrc || "";
+            const safeTitle = escapeHtml(project.title || "");
+            const safeDescription = escapeHtml(project.description || "");
+            const safeImage = imageSource
+              ? '<img class="project-image" src="' +
+                escapeHtml(imageSource) +
+                '" alt="Projektbild von ' +
+                safeTitle +
+                '">'
+              : "";
+            const safeLink = project.link
+              ? '<p><a class="project-link" href="' +
+                escapeHtml(project.link) +
+                '" target="_blank" rel="noopener noreferrer">Projekt ansehen</a></p>'
+              : "";
+            const hasDemo = Boolean(project.demoUrl);
+            const hasGithub = Boolean(project.githubUrl);
+            const menu =
+              '<div class="project-menu-wrapper">' +
+              '<button class="project-menu-toggle" type="button" data-action="toggle-menu" data-id="' +
+              escapeHtml(project.id) +
+              '" aria-label="Projektmenu">...</button>' +
+              '<div class="project-menu" id="menu-' +
+              escapeHtml(project.id) +
+              '" hidden>' +
+              '<button type="button" class="project-menu-item" data-action="live-demo" data-id="' +
+              escapeHtml(project.id) +
+              '" ' +
+              (hasDemo ? "" : "disabled") +
+              ">Live Demo</button>" +
+              '<button type="button" class="project-menu-item" data-action="github" data-id="' +
+              escapeHtml(project.id) +
+              '" ' +
+              (hasGithub ? "" : "disabled") +
+              ">Github</button>" +
+              '<button type="button" class="project-menu-item" data-action="bearbeitung" data-id="' +
+              escapeHtml(project.id) +
+              '">Bearbeitung</button>' +
+              "</div>" +
+              "</div>";
+
+            return (
+              '<article class="card">' +
+              safeImage +
+              menu +
+              "<h3>" + safeTitle + "</h3>" +
+              "<p>" + safeDescription + "</p>" +
+              '<p class="project-date">Hochgeladen am: ' +
+              formatDate(project.uploadedAt) +
+              "</p>" +
+              safeLink +
+              "</article>"
+            );
+          })
+          .join("");
+      }
+
+      function toggleOwnerUi(isOwner, email) {
+        const ownerTools = document.getElementById("owner-tools");
+        const loginBox = document.getElementById("login-box");
+        const ownerEmail = document.getElementById("owner-email");
+        ownerTools.hidden = !isOwner;
+        loginBox.hidden = isOwner;
+        ownerEmail.textContent = isOwner && email ? "Angemeldet als: " + email : "";
+      }
+
+      function initForm() {
+        const toggleButton = document.getElementById("toggle-project-form");
+        const form = document.getElementById("project-form");
+        const idInput = document.getElementById("project-id");
+        const saveButton = document.getElementById("save-project-btn");
+        const cancelEditButton = document.getElementById("cancel-edit-btn");
+        const deleteProjectButton = document.getElementById("delete-project-btn");
+        const titleInput = document.getElementById("project-title");
+        const descriptionInput = document.getElementById("project-description");
+        const linkInput = document.getElementById("project-link");
+        const demoUrlInput = document.getElementById("project-demo-url");
+        const githubUrlInput = document.getElementById("project-github-url");
+        const imageInput = document.getElementById("project-image");
+        const list = document.getElementById("projects-list");
+        const loginBox = document.getElementById("login-box");
+
+        if (!toggleButton || !form) return;
+
+        toggleButton.addEventListener("click", function () {
+          form.hidden = !form.hidden;
+        });
+
+        function fileToDataUrl(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ""));
+            reader.onerror = () => reject(new Error("Image reading failed"));
+            reader.readAsDataURL(file);
+          });
+        }
+
+        function resetEditMode() {
+          editingProjectId = null;
+          idInput.value = "";
+          saveButton.textContent = "Projekt speichern";
+          cancelEditButton.hidden = true;
+          deleteProjectButton.hidden = true;
+          form.reset();
+          form.hidden = true;
+        }
+
+        form.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          const formData = new FormData(form);
+          const title = String(formData.get("title") || "").trim();
+          const description = String(formData.get("description") || "").trim();
+          const link = String(formData.get("link") || "").trim();
+          const demoUrl = String(formData.get("demoUrl") || "").trim();
+          const githubUrl = String(formData.get("githubUrl") || "").trim();
+          const imageFile = formData.get("image");
+
+          if (!title || !description) return;
+
+          let imageDataUrl = "";
+          if (imageFile instanceof File && imageFile.size > 0) {
+            try {
+              imageDataUrl = await fileToDataUrl(imageFile);
+            } catch (_error) {
+              imageDataUrl = "";
+            }
+          }
+
+          const projects = readProjects();
+          const currentId = String(idInput.value || "");
+          if (currentId) {
+            const index = projects.findIndex((item) => item.id === currentId);
+            if (index >= 0) {
+              const previous = projects[index];
+              projects[index] = {
+                ...previous,
+                title: title,
+                description: description,
+                link: link,
+                demoUrl: demoUrl,
+                githubUrl: githubUrl,
+                imageDataUrl: imageDataUrl || previous.imageDataUrl || "",
+                imageSrc: imageDataUrl ? "" : previous.imageSrc || "",
+              };
+            }
+          } else {
+            projects.push({
+              id: "project-" + Date.now().toString(36),
+              title: title,
+              description: description,
+              link: link,
+              demoUrl: demoUrl,
+              githubUrl: githubUrl,
+              imageDataUrl: imageDataUrl,
+              imageSrc: "",
+              uploadedAt: new Date().toISOString(),
+            });
+          }
+          saveProjects(projects);
+          renderProjects();
+          resetEditMode();
+        });
+
+        cancelEditButton.addEventListener("click", function () {
+          resetEditMode();
+        });
+
+        deleteProjectButton.addEventListener("click", function () {
+          const currentId = String(idInput.value || "");
+          if (!currentId) return;
+          const shouldDelete = window.confirm("Projekt wirklich loschen?");
+          if (!shouldDelete) return;
+          const projects = readProjects().filter((item) => item.id !== currentId);
+          saveProjects(projects);
+          renderProjects();
+          resetEditMode();
+        });
+
+        list.addEventListener("click", function (event) {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const action = target.getAttribute("data-action");
+          const projectId = target.getAttribute("data-id");
+          if (!action || !projectId) return;
+
+          const projects = readProjects();
+          const project = projects.find((item) => item.id === projectId);
+          if (!project) return;
+
+          if (action === "toggle-menu") {
+            const allMenus = list.querySelectorAll(".project-menu");
+            allMenus.forEach((menuElement) => {
+              if (!(menuElement instanceof HTMLElement)) return;
+              if (menuElement.id === "menu-" + projectId) {
+                menuElement.hidden = !menuElement.hidden;
+              } else {
+                menuElement.hidden = true;
+              }
+            });
+            return;
+          }
+
+          if (action === "live-demo") {
+            if (project.demoUrl) {
+              window.open(project.demoUrl, "_blank", "noopener,noreferrer");
+            }
+            return;
+          }
+
+          if (action === "github") {
+            if (project.githubUrl) {
+              window.open(project.githubUrl, "_blank", "noopener,noreferrer");
+            }
+            return;
+          }
+
+          if (action === "bearbeitung") {
+            const isOwner = localStorage.getItem(OWNER_STORAGE_KEY) === "true";
+            if (!isOwner) {
+              loginBox.scrollIntoView({ behavior: "smooth", block: "start" });
+              const loginMessage = document.getElementById("login-message");
+              if (loginMessage) {
+                loginMessage.textContent =
+                  "Bitte zuerst mit deiner autorisierten E-Mail anmelden.";
+              }
+              return;
+            }
+
+            editingProjectId = projectId;
+            idInput.value = projectId;
+            titleInput.value = project.title || "";
+            descriptionInput.value = project.description || "";
+            linkInput.value = project.link || "";
+            demoUrlInput.value = project.demoUrl || "";
+            githubUrlInput.value = project.githubUrl || "";
+            imageInput.value = "";
+            saveButton.textContent = "Projekt aktualisieren";
+            cancelEditButton.hidden = false;
+            deleteProjectButton.hidden = false;
+            form.hidden = false;
+            form.scrollIntoView({ behavior: "smooth", block: "start" });
+            const thisMenu = document.getElementById("menu-" + projectId);
+            if (thisMenu) {
+              thisMenu.hidden = true;
+            }
+          }
+        });
+
+        document.addEventListener("click", function (event) {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const clickedInsideMenu = target.closest(".project-menu-wrapper");
+          if (clickedInsideMenu) return;
+          const allMenus = list.querySelectorAll(".project-menu");
+          allMenus.forEach((menuElement) => {
+            if (menuElement instanceof HTMLElement) {
+              menuElement.hidden = true;
+            }
+          });
+        });
+
+        document.addEventListener("keydown", function (event) {
+          if (event.key !== "Escape") return;
+          const allMenus = list.querySelectorAll(".project-menu");
+          allMenus.forEach((menuElement) => {
+            if (menuElement instanceof HTMLElement) {
+              menuElement.hidden = true;
+            }
+          });
+        });
+      }
+
+      function initLogin() {
+        const loginForm = document.getElementById("login-form");
+        const loginMessage = document.getElementById("login-message");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        loginForm.addEventListener("submit", function (event) {
+          event.preventDefault();
+          loginMessage.textContent = "";
+          const formData = new FormData(loginForm);
+          const email = String(formData.get("email") || "").trim().toLowerCase();
+          const password = String(formData.get("password") || "");
+
+          if (!ALLOWED_EMAILS.includes(email)) {
+            loginMessage.textContent = "Diese E-Mail ist nicht autorisiert.";
+            return;
+          }
+          if (password !== FRONTEND_PASSWORD) {
+            loginMessage.textContent = "Falsches Passwort.";
+            return;
+          }
+
+          localStorage.setItem(OWNER_STORAGE_KEY, "true");
+          localStorage.setItem(OWNER_EMAIL_KEY, email);
+          toggleOwnerUi(true, email);
+          loginForm.reset();
+        });
+
+        logoutBtn.addEventListener("click", function () {
+          localStorage.removeItem(OWNER_STORAGE_KEY);
+          localStorage.removeItem(OWNER_EMAIL_KEY);
+          toggleOwnerUi(false, "");
+        });
+      }
+
+      function initAuth() {
+        const isOwner = localStorage.getItem(OWNER_STORAGE_KEY) === "true";
+        const email = localStorage.getItem(OWNER_EMAIL_KEY) || "";
+        toggleOwnerUi(isOwner, email);
+      }
+
+      initLogin();
+      initAuth();
+      renderProjects();
+      initForm();
+    </script>
+  </body>
+</html>
