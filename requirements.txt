@@ -1,0 +1,2 @@
+# Aucune dependance externe : server.py utilise uniquement la bibliotheque standard Python.
+# Ce fichier est requis par Render pour la commande de build par defaut.
