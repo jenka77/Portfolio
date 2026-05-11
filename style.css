@@ -155,54 +155,58 @@ body {
   max-width: 44ch;
 }
 
-.hero-arch-wrap {
-  margin-top: 2rem;
-  width: min(300px, 82vw);
+.hero-float-house {
+  margin-top: 1.75rem;
+  margin-right: clamp(-0.25rem, -0.5rem + 1.5vw, 0.5rem);
+  width: min(400px, 94vw);
   max-width: 100%;
-  aspect-ratio: 260 / 180;
-  align-self: flex-start;
+  min-height: min(280px, 42vh);
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-.hero-arch-scene {
+.hero-float-house__perspective {
   width: 100%;
-  height: 100%;
-  perspective: 920px;
-  perspective-origin: 50% 45%;
+  perspective: 1100px;
+  perspective-origin: 70% 35%;
 }
 
-.hero-arch-spinner {
-  width: 100%;
-  height: 100%;
+.hero-float-house__turn {
   transform-style: preserve-3d;
-  animation: hero-arch-spin 24s linear infinite;
+  animation: hero-float-turn 9s ease-in-out infinite alternate;
   will-change: transform;
 }
 
-.hero-arch-svg {
+.hero-float-house__img {
   width: 100%;
-  height: 100%;
+  max-width: min(400px, 94vw);
+  height: auto;
+  max-height: min(320px, 48vh);
   display: block;
-  border-radius: 0.85rem;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(56, 189, 248, 0.35);
-  box-shadow:
-    0 16px 42px rgba(2, 8, 23, 0.55),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  margin: 0;
+  object-fit: contain;
+  border: none;
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.55))
+    drop-shadow(0 6px 12px rgba(56, 189, 248, 0.12));
 }
 
-@keyframes hero-arch-spin {
+@keyframes hero-float-turn {
   from {
     transform: rotateY(0deg);
   }
   to {
-    transform: rotateY(360deg);
+    transform: rotateY(50deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-arch-spinner {
+  .hero-float-house__turn {
     animation: none;
-    transform: rotateY(-12deg);
+    transform: rotateY(-8deg);
   }
 }
 
@@ -400,12 +404,12 @@ body {
   margin-top: 0.9rem;
 }
 
-.private-login-home {
-  margin-top: 0.5rem;
+.private-page-nav {
+  margin-bottom: 1rem;
 }
 
-.private-login-home .btn {
-  margin-top: 0.85rem;
+.private-page-nav .btn {
+  margin-top: 0;
 }
 
 .project-form {
