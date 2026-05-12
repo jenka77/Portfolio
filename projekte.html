@@ -31,7 +31,11 @@
         <h2>Projekte und Realisationen</h2>
         <p>
           Diese Liste wird automatisch nach Upload-Datum sortiert (neueste
-          zuerst).
+          zuerst). Die Projekte werden auf dem Server gespeichert (SQLite) —
+          bitte diese Seite uber denselben Host offnen wie
+          <code>python3 server.py</code> (z.&nbsp;B.
+          <code>http://localhost:8000/projekte.html</code>), nicht als
+          <code>file://</code>-Datei.
         </p>
 
         <div id="projects-list" class="cards"></div>
@@ -94,7 +98,11 @@
 
         <div id="login-box" class="owner-tools" hidden>
           <h3>Projektverwaltung Login</h3>
-          <p>Nur deine autorisierten E-Mails konnen neue Projekte hochladen.</p>
+          <p>
+            Anmeldung am Server: autorisierte E-Mail und das Admin-Passwort
+            (Umgebungsvariable <code>PORTFOLIO_ADMIN_PASSWORD</code>, sonst
+            Vorgabe im <code>server.py</code>).
+          </p>
           <form id="login-form" class="project-form">
             <label for="login-email">E-Mail</label>
             <input id="login-email" name="email" type="email" required />
@@ -125,54 +133,51 @@
       <p>&copy; 2026 Jenny Karelle Nanseu Tchatchouang. Alle Rechte vorbehalten.</p>
     </footer>
     <script>
-      const ALLOWED_EMAILS = [
-        "karelletchatchouang@gmail.com",
-        "jenny.karelle.nanseu.tchatchouang@mni.thm.de",
-      ];
-      const FRONTEND_PASSWORD = "JennyPortfolio2026";
-      const OWNER_STORAGE_KEY = "portfolio_owner_mode";
-      const OWNER_EMAIL_KEY = "portfolio_owner_email";
-      const PROJECTS_STORAGE_KEY = "portfolio_projects";
-
-      const defaultProjects = [
-        {
-          title: "Projekt 01 - Portfolio Website",
-          description:
-            "Eine responsive Website mit modernem Design zur Prasentation meiner Person und meiner Arbeiten.",
-          link: "",
-          demoUrl: "",
-          githubUrl: "",
-          imageSrc: "portofolio.jpeg",
-          uploadedAt: "2026-05-01T08:00:00.000Z",
-        },
-        {
-          title: "Projekt 02 - Lernprojekt",
-          description:
-            "Entwicklung eines kleinen Tools, um praktische Erfahrung in HTML, CSS und JavaScript zu vertiefen.",
-          link: "",
-          demoUrl: "",
-          githubUrl: "",
-          imageSrc: "portofoliobild.jpeg",
-          uploadedAt: "2026-04-20T09:30:00.000Z",
-        },
-        {
-          title: "Projekt 03 - Teamarbeit",
-          description:
-            "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung.",
-          link: "",
-          demoUrl: "",
-          githubUrl: "",
-          imageSrc: "WhatsApp Image 2026-05-09 at 09.23.21.jpeg",
-          uploadedAt: "2026-03-28T15:45:00.000Z",
-        },
-      ];
-
+      const apiAuth = { authenticated: false, email: null };
+      let projectsCache = [];
       let editingProjectId = null;
+
+      function readProjects() {
+        return projectsCache;
+      }
+
+      async function refreshAuth() {
+        try {
+          const response = await fetch("/api/me", { credentials: "same-origin" });
+          const data = await response.json();
+          apiAuth.authenticated = Boolean(data.authenticated);
+          apiAuth.email = data.email || null;
+        } catch (_error) {
+          apiAuth.authenticated = false;
+          apiAuth.email = null;
+        }
+        toggleOwnerUi(apiAuth.authenticated, apiAuth.email || "");
+      }
+
+      async function loadProjects() {
+        const list = document.getElementById("projects-list");
+        try {
+          const response = await fetch("/api/projects", { credentials: "same-origin" });
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          const data = await response.json();
+          projectsCache = normalizeProjects(data.projects || []);
+        } catch (_error) {
+          projectsCache = [];
+          if (list) {
+            list.innerHTML =
+              '<p class="project-date">Projekte konnten nicht geladen werden. Starte den Server mit <code>python3 server.py</code> und offne diese Seite uber <code>http://localhost:PORT/projekte.html</code> (nicht als lokale Datei).</p>';
+          }
+          return;
+        }
+        renderProjects();
+      }
 
       function closeLoginPanel() {
         const loginBox = document.getElementById("login-box");
         if (!loginBox) return;
-        if (localStorage.getItem(OWNER_STORAGE_KEY) === "true") return;
+        if (apiAuth.authenticated) return;
         loginBox.hidden = true;
       }
 
@@ -200,42 +205,27 @@
           .replaceAll("'", "&#39;");
       }
 
-      function readProjects() {
-        const saved = localStorage.getItem(PROJECTS_STORAGE_KEY);
-        if (!saved) return normalizeProjects(defaultProjects);
-        try {
-          const parsed = JSON.parse(saved);
-          return Array.isArray(parsed) && parsed.length > 0
-            ? normalizeProjects(parsed)
-            : normalizeProjects(defaultProjects);
-        } catch (_error) {
-          return normalizeProjects(defaultProjects);
-        }
-      }
-
-      function saveProjects(projects) {
-        localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
-      }
-
-      function normalizeProjects(projects) {
-        return projects.map((project) => {
-          const baseId = project.id || project.uploadedAt || String(Math.random());
+      function normalizeProjects(rows) {
+        return rows.map((project) => {
+          const baseId =
+            project.id != null ? project.id : project.uploadedAt || String(Math.random());
           return {
             id: String(baseId),
             title: project.title || "",
             description: project.description || "",
             link: project.link || "",
-            demoUrl: project.demoUrl || "",
-            githubUrl: project.githubUrl || "",
-            imageSrc: project.imageSrc || "",
-            imageDataUrl: project.imageDataUrl || "",
-            uploadedAt: project.uploadedAt || new Date().toISOString(),
+            demoUrl: project.demo_url || project.demoUrl || "",
+            githubUrl: project.github_url || project.githubUrl || "",
+            imageSrc: project.image_src || project.imageSrc || "",
+            imageDataUrl: project.image_data_url || project.imageDataUrl || "",
+            uploadedAt: project.uploaded_at || project.uploadedAt || new Date().toISOString(),
           };
         });
       }
 
       function renderProjects() {
         const list = document.getElementById("projects-list");
+        if (!list) return;
         const projects = readProjects()
           .slice()
           .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
@@ -341,14 +331,13 @@
         if (fabAdd) {
           fabAdd.addEventListener("click", function (event) {
             event.stopPropagation();
-            const isOwner = localStorage.getItem(OWNER_STORAGE_KEY) === "true";
-            if (!isOwner) {
+            if (!apiAuth.authenticated) {
               openLoginPanel();
               loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
               const loginMessage = document.getElementById("login-message");
               if (loginMessage) {
                 loginMessage.textContent =
-                  "Bitte zuerst mit deiner autorisierten E-Mail anmelden.";
+                  "Bitte zuerst mit deiner autorisierten E-Mail und dem Server-Passwort anmelden.";
               }
               return;
             }
@@ -396,38 +385,58 @@
             }
           }
 
-          const projects = readProjects();
           const currentId = String(idInput.value || "");
+          let imageSrc = "";
+          let imageDataUrlOut = imageDataUrl;
           if (currentId) {
-            const index = projects.findIndex((item) => item.id === currentId);
-            if (index >= 0) {
-              const previous = projects[index];
-              projects[index] = {
-                ...previous,
-                title: title,
-                description: description,
-                link: link,
-                demoUrl: demoUrl,
-                githubUrl: githubUrl,
-                imageDataUrl: imageDataUrl || previous.imageDataUrl || "",
-                imageSrc: imageDataUrl ? "" : previous.imageSrc || "",
-              };
+            const previous = readProjects().find((item) => item.id === currentId);
+            if (previous) {
+              if (!imageDataUrlOut) {
+                imageDataUrlOut = previous.imageDataUrl || "";
+                imageSrc = previous.imageSrc || "";
+              }
             }
+          }
+
+          const payload = {
+            title: title,
+            description: description,
+            link: link,
+            demoUrl: demoUrl,
+            githubUrl: githubUrl,
+            imageSrc: imageSrc,
+            imageDataUrl: imageDataUrlOut,
+          };
+
+          let response;
+          if (currentId) {
+            payload.id = Number(currentId);
+            response = await fetch("/api/projects", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              body: JSON.stringify(payload),
+            });
           } else {
-            projects.push({
-              id: "project-" + Date.now().toString(36),
-              title: title,
-              description: description,
-              link: link,
-              demoUrl: demoUrl,
-              githubUrl: githubUrl,
-              imageDataUrl: imageDataUrl,
-              imageSrc: "",
-              uploadedAt: new Date().toISOString(),
+            response = await fetch("/api/projects", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              body: JSON.stringify(payload),
             });
           }
-          saveProjects(projects);
-          renderProjects();
+
+          if (!response.ok) {
+            let msg = "Speichern fehlgeschlagen.";
+            try {
+              const err = await response.json();
+              if (err.error) msg = err.error;
+            } catch (_e) {}
+            window.alert(msg);
+            return;
+          }
+
+          await loadProjects();
           resetEditMode();
         });
 
@@ -435,14 +444,25 @@
           resetEditMode();
         });
 
-        deleteProjectButton.addEventListener("click", function () {
+        deleteProjectButton.addEventListener("click", async function () {
           const currentId = String(idInput.value || "");
           if (!currentId) return;
           const shouldDelete = window.confirm("Projekt wirklich loschen?");
           if (!shouldDelete) return;
-          const projects = readProjects().filter((item) => item.id !== currentId);
-          saveProjects(projects);
-          renderProjects();
+          const response = await fetch(
+            "/api/projects?id=" + encodeURIComponent(currentId),
+            { method: "DELETE", credentials: "same-origin" }
+          );
+          if (!response.ok) {
+            let msg = "Loschen fehlgeschlagen.";
+            try {
+              const err = await response.json();
+              if (err.error) msg = err.error;
+            } catch (_e) {}
+            window.alert(msg);
+            return;
+          }
+          await loadProjects();
           resetEditMode();
         });
 
@@ -486,18 +506,17 @@
 
           if (action === "bearbeitung") {
             event.stopPropagation();
-            const isOwner = localStorage.getItem(OWNER_STORAGE_KEY) === "true";
             const thisMenu = document.getElementById("menu-" + projectId);
             if (thisMenu) {
               thisMenu.hidden = true;
             }
-            if (!isOwner) {
+            if (!apiAuth.authenticated) {
               openLoginPanel();
               loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
               const loginMessage = document.getElementById("login-message");
               if (loginMessage) {
                 loginMessage.textContent =
-                  "Bitte zuerst mit deiner autorisierten E-Mail anmelden.";
+                  "Bitte zuerst mit deiner autorisierten E-Mail und dem Server-Passwort anmelden.";
               }
               return;
             }
@@ -551,47 +570,52 @@
         const loginMessage = document.getElementById("login-message");
         const logoutBtn = document.getElementById("logout-btn");
 
-        loginForm.addEventListener("submit", function (event) {
+        loginForm.addEventListener("submit", async function (event) {
           event.preventDefault();
           loginMessage.textContent = "";
           const formData = new FormData(loginForm);
           const email = String(formData.get("email") || "").trim().toLowerCase();
           const password = String(formData.get("password") || "");
 
-          if (!ALLOWED_EMAILS.includes(email)) {
-            loginMessage.textContent = "Diese E-Mail ist nicht autorisiert.";
-            return;
+          try {
+            const response = await fetch("/api/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "same-origin",
+              body: JSON.stringify({ email: email, password: password }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+              loginMessage.textContent =
+                data.error || "Anmeldung fehlgeschlagen (E-Mail oder Passwort).";
+              return;
+            }
+            loginForm.reset();
+            await refreshAuth();
+            await loadProjects();
+            closeLoginPanel();
+          } catch (_error) {
+            loginMessage.textContent =
+              "Keine Verbindung zum Server. Läuft python3 server.py?";
           }
-          if (password !== FRONTEND_PASSWORD) {
-            loginMessage.textContent = "Falsches Passwort.";
-            return;
-          }
-
-          localStorage.setItem(OWNER_STORAGE_KEY, "true");
-          localStorage.setItem(OWNER_EMAIL_KEY, email);
-          toggleOwnerUi(true, email);
-          loginForm.reset();
-          closeLoginPanel();
         });
 
-        logoutBtn.addEventListener("click", function () {
-          localStorage.removeItem(OWNER_STORAGE_KEY);
-          localStorage.removeItem(OWNER_EMAIL_KEY);
-          toggleOwnerUi(false, "");
+        logoutBtn.addEventListener("click", async function () {
+          try {
+            await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
+          } catch (_e) {}
+          await refreshAuth();
+          await loadProjects();
           closeLoginPanel();
         });
       }
 
-      function initAuth() {
-        const isOwner = localStorage.getItem(OWNER_STORAGE_KEY) === "true";
-        const email = localStorage.getItem(OWNER_EMAIL_KEY) || "";
-        toggleOwnerUi(isOwner, email);
-      }
-
-      initLogin();
-      initAuth();
-      renderProjects();
-      initForm();
+      (async function bootstrap() {
+        initLogin();
+        await refreshAuth();
+        await loadProjects();
+        initForm();
+      })();
     </script>
   </body>
 </html>

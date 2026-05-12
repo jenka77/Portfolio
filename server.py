@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from http import cookies
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -46,18 +46,27 @@ def init_db():
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
                 link TEXT DEFAULT '',
+                demo_url TEXT DEFAULT '',
+                github_url TEXT DEFAULT '',
                 image_src TEXT DEFAULT '',
                 image_data_url TEXT DEFAULT '',
                 uploaded_at TEXT NOT NULL
             )
             """
         )
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
+        if "demo_url" not in cols:
+            conn.execute("ALTER TABLE projects ADD COLUMN demo_url TEXT DEFAULT ''")
+        if "github_url" not in cols:
+            conn.execute("ALTER TABLE projects ADD COLUMN github_url TEXT DEFAULT ''")
         count = conn.execute("SELECT COUNT(*) AS c FROM projects").fetchone()["c"]
         if count == 0:
             seed_projects = [
                 (
                     "Projekt 01 - Portfolio Website",
                     "Eine responsive Website mit modernem Design zur Prasentation meiner Person und meiner Arbeiten.",
+                    "",
+                    "",
                     "",
                     "portofolio.jpeg",
                     "",
@@ -67,6 +76,8 @@ def init_db():
                     "Projekt 02 - Lernprojekt",
                     "Entwicklung eines kleinen Tools, um praktische Erfahrung in HTML, CSS und JavaScript zu vertiefen.",
                     "",
+                    "",
+                    "",
                     "portofoliobild.jpeg",
                     "",
                     "2026-04-20T09:30:00.000Z",
@@ -75,6 +86,8 @@ def init_db():
                     "Projekt 03 - Teamarbeit",
                     "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung.",
                     "",
+                    "",
+                    "",
                     "WhatsApp Image 2026-05-09 at 09.23.21.jpeg",
                     "",
                     "2026-03-28T15:45:00.000Z",
@@ -82,8 +95,9 @@ def init_db():
             ]
             conn.executemany(
                 """
-                INSERT INTO projects (title, description, link, image_src, image_data_url, uploaded_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO projects (title, description, link, demo_url, github_url,
+                                      image_src, image_data_url, uploaded_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 seed_projects,
             )
@@ -154,7 +168,8 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             try:
                 rows = conn.execute(
                     """
-                    SELECT id, title, description, link, image_src, image_data_url, uploaded_at
+                    SELECT id, title, description, link, demo_url, github_url,
+                           image_src, image_data_url, uploaded_at
                     FROM projects
                     ORDER BY datetime(uploaded_at) DESC
                     """
@@ -233,6 +248,8 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             title = str(payload.get("title", "")).strip()
             description = str(payload.get("description", "")).strip()
             link = str(payload.get("link", "")).strip()
+            demo_url = str(payload.get("demoUrl", "")).strip()
+            github_url = str(payload.get("githubUrl", "")).strip()
             image_src = str(payload.get("imageSrc", "")).strip()
             image_data_url = str(payload.get("imageDataUrl", "")).strip()
 
@@ -244,10 +261,20 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             try:
                 conn.execute(
                     """
-                    INSERT INTO projects (title, description, link, image_src, image_data_url, uploaded_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO projects (title, description, link, demo_url, github_url,
+                                          image_src, image_data_url, uploaded_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (title, description, link, image_src, image_data_url, now_iso()),
+                    (
+                        title,
+                        description,
+                        link,
+                        demo_url,
+                        github_url,
+                        image_src,
+                        image_data_url,
+                        now_iso(),
+                    ),
                 )
                 conn.commit()
             finally:
@@ -257,6 +284,97 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             return
 
         self._json(404, {"error": "Not found"})
+        return
+
+    def do_PUT(self):
+        parsed = urlparse(self.path)
+        if parsed.path != "/api/projects":
+            self.send_error(404, "Not Found")
+            return
+        email = self._get_current_user()
+        if not email:
+            self._json(401, {"error": "Nicht angemeldet."})
+            return
+        try:
+            payload = self._read_json_body()
+        except json.JSONDecodeError:
+            self._json(400, {"error": "Ungultige JSON-Daten."})
+            return
+        try:
+            project_id = int(payload.get("id"))
+        except (TypeError, ValueError):
+            self._json(400, {"error": "Ungultige Projekt-ID."})
+            return
+
+        title = str(payload.get("title", "")).strip()
+        description = str(payload.get("description", "")).strip()
+        link = str(payload.get("link", "")).strip()
+        demo_url = str(payload.get("demoUrl", "")).strip()
+        github_url = str(payload.get("githubUrl", "")).strip()
+        image_src = str(payload.get("imageSrc", "")).strip()
+        image_data_url = str(payload.get("imageDataUrl", "")).strip()
+
+        if not title or not description:
+            self._json(400, {"error": "Titel und Beschreibung sind erforderlich."})
+            return
+
+        conn = get_db()
+        try:
+            cur = conn.execute(
+                """
+                UPDATE projects
+                SET title = ?, description = ?, link = ?, demo_url = ?, github_url = ?,
+                    image_src = ?, image_data_url = ?
+                WHERE id = ?
+                """,
+                (
+                    title,
+                    description,
+                    link,
+                    demo_url,
+                    github_url,
+                    image_src,
+                    image_data_url,
+                    project_id,
+                ),
+            )
+            if cur.rowcount == 0:
+                self._json(404, {"error": "Projekt nicht gefunden."})
+                return
+            conn.commit()
+        finally:
+            conn.close()
+
+        self._json(200, {"ok": True})
+
+    def do_DELETE(self):
+        parsed = urlparse(self.path)
+        if parsed.path != "/api/projects":
+            self.send_error(404, "Not Found")
+            return
+        email = self._get_current_user()
+        if not email:
+            self._json(401, {"error": "Nicht angemeldet."})
+            return
+        qs = parse_qs(parsed.query)
+        id_raw = (qs.get("id") or [None])[0]
+        try:
+            project_id = int(id_raw)
+        except (TypeError, ValueError):
+            self._json(400, {"error": "Ungultige Projekt-ID."})
+            return
+
+        conn = get_db()
+        try:
+            cur = conn.execute("DELETE FROM projects WHERE id = ?", (project_id,))
+            if cur.rowcount == 0:
+                self._json(404, {"error": "Projekt nicht gefunden."})
+                return
+            conn.commit()
+        finally:
+            conn.close()
+
+        self._json(200, {"ok": True})
 
 
 if __name__ == "__main__":
