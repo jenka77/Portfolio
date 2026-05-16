@@ -31,129 +31,27 @@
         <h2>Projekte und Realisationen</h2>
         <p>
           Diese Liste wird automatisch nach Upload-Datum sortiert (neueste
-          zuerst). Lokal: SQLite. Online (Render): Daten aus Git
-          (<code>portfolio.db</code> + <code>projects.json</code>).
+          zuerst). Die Inhalte werden manuell im Projekt gepflegt.
         </p>
         <p id="projects-server-hint" class="projects-server-hint"></p>
 
         <div id="projects-list" class="cards"></div>
 
-        <div id="owner-tools" class="owner-tools" hidden>
-          <h3>Nur fur Besitzerin</h3>
-          <p id="owner-email"></p>
-          <p>Neues Projekt uber das Plus unten rechts hinzufugen.</p>
-          <button id="logout-btn" class="btn btn-ghost" type="button">Abmelden</button>
-
-          <form id="project-form" class="project-form" hidden>
-            <input id="project-id" name="id" type="hidden" />
-            <label for="project-title">Titel</label>
-            <input id="project-title" name="title" type="text" required />
-
-            <label for="project-description">Beschreibung</label>
-            <textarea id="project-description" name="description" rows="4" required></textarea>
-
-            <label for="project-link">Projekt-Link (optional)</label>
-            <input
-              id="project-link"
-              name="link"
-              type="text"
-              inputmode="url"
-              autocomplete="off"
-              placeholder="https://..."
-            />
-
-            <label for="project-demo-url">Live Demo URL (optional)</label>
-            <input
-              id="project-demo-url"
-              name="demoUrl"
-              type="text"
-              inputmode="url"
-              autocomplete="off"
-              placeholder="https://..."
-            />
-
-            <label for="project-github-url">Github URL (optional)</label>
-            <input
-              id="project-github-url"
-              name="githubUrl"
-              type="text"
-              inputmode="url"
-              autocomplete="off"
-              placeholder="https://github.com/..."
-            />
-
-            <label for="project-image">Projektbild (optional)</label>
-            <input
-              id="project-image"
-              name="image"
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-            />
-
-            <button id="save-project-btn" type="submit" class="btn">Projekt speichern</button>
-            <button id="cancel-edit-btn" type="button" class="btn btn-ghost" hidden>
-              Bearbeitung abbrechen
-            </button>
-            <button id="delete-project-btn" type="button" class="btn btn-ghost" hidden>
-              Dieses Projekt loschen
-            </button>
-          </form>
-        </div>
-
-        <div id="login-box" class="owner-tools" hidden>
-          <h3>Projektverwaltung Login</h3>
-          <p>
-            Anmeldung am Server: eine der erlaubten E-Mails und das
-            <strong>Admin-Passwort</strong> (Umgebungsvariable
-            <code>PORTFOLIO_ADMIN_PASSWORD</code>). Ohne Variable lautet die
-            Vorgabe im Entwicklungsmodus <code>ChangeMeNow123!</code> — bitte in
-            Produktion unbedingt andern.
-          </p>
-          <form id="login-form" class="project-form">
-            <label for="login-email">E-Mail</label>
-            <input id="login-email" name="email" type="email" required />
-
-            <label for="login-password">Passwort</label>
-            <input id="login-password" name="password" type="password" required />
-
-            <button type="submit" class="btn">Anmelden</button>
-          </form>
-          <p id="login-message" class="project-date"></p>
-        </div>
-
         <a class="btn" href="index.html#start">Zuruck zur Startseite</a>
       </section>
     </main>
-
-    <button
-      type="button"
-      id="fab-add-project"
-      class="fab-add-project"
-      aria-label="Neues Projekt hinzufugen"
-      title="Neues Projekt hinzufugen"
-    >
-      +
-    </button>
 
     <footer class="footer">
       <p>&copy; 2026 Jenny Karelle Nanseu Tchatchouang. Alle Rechte vorbehalten.</p>
     </footer>
     <script>
-      const apiAuth = { authenticated: false, email: null };
       let projectsCache = [];
-      let editingProjectId = null;
-      /** true = GitHub Pages / ohne Python-API; nur Anzeige aus projects.json */
-      let staticReadOnly = false;
 
       function readProjects() {
         return projectsCache;
       }
 
       const FETCH_OPTS = { credentials: "include" };
-
-      function isFileProtocol() {
-        return window.location.protocol === "file:";
-      }
 
       function setServerHint(html, asError) {
         const el = document.getElementById("projects-server-hint");
@@ -163,36 +61,13 @@
         el.hidden = !html;
       }
 
-      function setStaticReadOnlyUi(isStatic) {
-        staticReadOnly = isStatic;
-        const fab = document.getElementById("fab-add-project");
-        if (fab) {
-          fab.hidden = isStatic;
+      async function loadProjectsFromApi() {
+        const response = await fetch("/api/projects", FETCH_OPTS);
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
         }
-      }
-
-      async function refreshAuth() {
-        if (isFileProtocol() || staticReadOnly) {
-          apiAuth.authenticated = false;
-          apiAuth.email = null;
-          toggleOwnerUi(false, "");
-          return;
-        }
-        try {
-          const response = await fetch("/api/me", FETCH_OPTS);
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            apiAuth.authenticated = false;
-            apiAuth.email = null;
-          } else {
-            apiAuth.authenticated = Boolean(data.authenticated);
-            apiAuth.email = data.email || null;
-          }
-        } catch (_error) {
-          apiAuth.authenticated = false;
-          apiAuth.email = null;
-        }
-        toggleOwnerUi(apiAuth.authenticated, apiAuth.email || "");
+        const data = await response.json();
+        return Array.isArray(data.projects) ? normalizeProjects(data.projects) : [];
       }
 
       async function loadProjectsFromJson() {
@@ -206,90 +81,23 @@
 
       async function loadProjects() {
         const list = document.getElementById("projects-list");
-        if (isFileProtocol()) {
-          projectsCache = [];
-          setStaticReadOnlyUi(false);
-          try {
-            projectsCache = await loadProjectsFromJson();
-            setServerHint(
-              "Vorschau aus <code>projects.json</code> (Datei geoffnet per <code>file://</code>). " +
-                "Zum Bearbeiten: <code>python3 server.py</code>, dann " +
-                "<code>http://localhost:8000/projekte.html</code>.",
-              false
-            );
-            renderProjects();
-          } catch (_error) {
-            setServerHint(
-              "Diese Seite wurde als lokale Datei geoffnet (<code>file://</code>). " +
-                "Bitte den Server starten: <code>python3 server.py</code>, dann im Browser " +
-                "<code>http://localhost:8000/projekte.html</code> offnen.",
-              true
-            );
-            if (list) {
-              list.innerHTML = "";
-            }
-          }
-          return;
-        }
-
         setServerHint("", false);
-
         try {
-          const response = await fetch("/api/projects", FETCH_OPTS);
-          if (!response.ok) {
-            throw new Error("HTTP " + response.status);
-          }
-          const data = await response.json();
-          const rows = data.projects;
-          projectsCache = Array.isArray(rows) ? normalizeProjects(rows) : [];
-          setStaticReadOnlyUi(false);
-          setServerHint(
-            "Bearbeitungsmodus aktiv. Nach Anderungen fur Render: " +
-              "<code>git add portfolio.db projects.json</code>, commit, push (Auto-Deploy).",
-            false
-          );
+          projectsCache = await loadProjectsFromApi();
         } catch (_apiError) {
           try {
             projectsCache = await loadProjectsFromJson();
-            setStaticReadOnlyUi(true);
-            setServerHint(
-              "<strong>Nur-Lese-Modus (statische Seite).</strong> Projekte aus " +
-                "<code>projects.json</code>. Zum Hinzufugen lokal: <code>python3 server.py</code>, " +
-                "Projekte pflegen, dann <code>git push</code>. "
-                + "JSON manuell geandert? <code>python3 import_projects.py</code> — "
-                + "nicht <code>export_projects.py</code> (uberschreibt JSON).",
-              false
-            );
           } catch (_jsonError) {
             projectsCache = [];
-            setStaticReadOnlyUi(true);
-            setServerHint(
-              "<strong>Projekte konnten nicht geladen werden.</strong> " +
-                "Lokal: <code>python3 server.py</code> starten. Online: <code>projects.json</code> " +
-                "muss im Repository liegen.",
-              true
-            );
+            setServerHint("Projekte konnten gerade nicht geladen werden.", true);
             if (list) {
               list.innerHTML =
-                '<p class="project-date">Keine Daten (weder API noch projects.json).</p>';
+                '<p class="project-date">Bitte versuche es spater erneut.</p>';
             }
             return;
           }
         }
         renderProjects();
-      }
-
-      function closeLoginPanel() {
-        const loginBox = document.getElementById("login-box");
-        if (!loginBox) return;
-        if (apiAuth.authenticated) return;
-        loginBox.hidden = true;
-      }
-
-      function openLoginPanel() {
-        const loginBox = document.getElementById("login-box");
-        if (!loginBox) return;
-        loginBox.hidden = false;
       }
 
       function formatDate(dateIso) {
@@ -357,31 +165,27 @@
               : "";
             const hasDemo = Boolean(project.demoUrl);
             const hasGithub = Boolean(project.githubUrl);
-            const menu =
-              '<div class="project-menu-wrapper">' +
-              '<button class="project-menu-toggle" type="button" data-action="toggle-menu" data-id="' +
-              escapeHtml(project.id) +
-              '" aria-label="Projektmenu">...</button>' +
-              '<div class="project-menu" id="menu-' +
-              escapeHtml(project.id) +
-              '" hidden>' +
-              '<button type="button" class="project-menu-item" data-action="live-demo" data-id="' +
-              escapeHtml(project.id) +
-              '" ' +
-              (hasDemo ? "" : "disabled") +
-              ">Live Demo</button>" +
-              '<button type="button" class="project-menu-item" data-action="github" data-id="' +
-              escapeHtml(project.id) +
-              '" ' +
-              (hasGithub ? "" : "disabled") +
-              ">Github</button>" +
-              (staticReadOnly
-                ? ""
-                : '<button type="button" class="project-menu-item" data-action="bearbeitung" data-id="' +
-                  escapeHtml(project.id) +
-                  '">Projekt bearbeiten</button>') +
-              "</div>" +
-              "</div>";
+            const menu = hasDemo || hasGithub
+              ? '<div class="project-menu-wrapper">' +
+                '<button class="project-menu-toggle" type="button" data-action="toggle-menu" data-id="' +
+                escapeHtml(project.id) +
+                '" aria-label="Projektmenu">...</button>' +
+                '<div class="project-menu" id="menu-' +
+                escapeHtml(project.id) +
+                '" hidden>' +
+                (hasDemo
+                  ? '<button type="button" class="project-menu-item" data-action="live-demo" data-id="' +
+                    escapeHtml(project.id) +
+                    '">Live Demo</button>'
+                  : "") +
+                (hasGithub
+                  ? '<button type="button" class="project-menu-item" data-action="github" data-id="' +
+                    escapeHtml(project.id) +
+                    '">Github</button>'
+                  : "") +
+                "</div>" +
+                "</div>"
+              : "";
 
             return (
               '<article class="card">' +
@@ -399,208 +203,9 @@
           .join("");
       }
 
-      function toggleOwnerUi(isOwner, email) {
-        const ownerTools = document.getElementById("owner-tools");
-        const loginBox = document.getElementById("login-box");
-        const ownerEmail = document.getElementById("owner-email");
-        ownerTools.hidden = !isOwner;
-        ownerEmail.textContent = isOwner && email ? "Angemeldet als: " + email : "";
-        loginBox.hidden = true;
-      }
-
-      function initForm() {
-        const fabAdd = document.getElementById("fab-add-project");
-        const form = document.getElementById("project-form");
-        const idInput = document.getElementById("project-id");
-        const saveButton = document.getElementById("save-project-btn");
-        const cancelEditButton = document.getElementById("cancel-edit-btn");
-        const deleteProjectButton = document.getElementById("delete-project-btn");
-        const titleInput = document.getElementById("project-title");
-        const descriptionInput = document.getElementById("project-description");
-        const linkInput = document.getElementById("project-link");
-        const demoUrlInput = document.getElementById("project-demo-url");
-        const githubUrlInput = document.getElementById("project-github-url");
-        const imageInput = document.getElementById("project-image");
+      function initProjectMenus() {
         const list = document.getElementById("projects-list");
-        const loginBox = document.getElementById("login-box");
-
-        if (!form) return;
-
-        function openNewProjectForm() {
-          editingProjectId = null;
-          idInput.value = "";
-          saveButton.textContent = "Projekt speichern";
-          cancelEditButton.hidden = true;
-          deleteProjectButton.hidden = true;
-          form.reset();
-          imageInput.value = "";
-          form.hidden = false;
-          form.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-
-        if (fabAdd) {
-          fabAdd.addEventListener("click", function (event) {
-            event.stopPropagation();
-            if (isFileProtocol()) {
-              openLoginPanel();
-              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
-              const loginMessage = document.getElementById("login-message");
-              if (loginMessage) {
-                loginMessage.textContent =
-                  "Bitte Seite uber http://localhost:PORT/projekte.html offnen (nicht als lokale Datei).";
-              }
-              return;
-            }
-            if (staticReadOnly) {
-              const loginMessage = document.getElementById("login-message");
-              openLoginPanel();
-              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
-              if (loginMessage) {
-                loginMessage.textContent =
-                  "Online nur Anzeige. Lokal server starten, Projekt anlegen, dann python3 export_projects.py und Git push.";
-              }
-              return;
-            }
-            if (!apiAuth.authenticated) {
-              openLoginPanel();
-              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
-              const loginMessage = document.getElementById("login-message");
-              if (loginMessage) {
-                loginMessage.textContent =
-                  "Bitte zuerst mit deiner autorisierten E-Mail und dem Server-Passwort anmelden.";
-              }
-              return;
-            }
-            openNewProjectForm();
-          });
-        }
-
-        function fileToDataUrl(file) {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(String(reader.result || ""));
-            reader.onerror = () => reject(new Error("Image reading failed"));
-            reader.readAsDataURL(file);
-          });
-        }
-
-        function resetEditMode() {
-          editingProjectId = null;
-          idInput.value = "";
-          saveButton.textContent = "Projekt speichern";
-          cancelEditButton.hidden = true;
-          deleteProjectButton.hidden = true;
-          form.reset();
-          form.hidden = true;
-        }
-
-        form.addEventListener("submit", async function (event) {
-          event.preventDefault();
-          if (staticReadOnly) {
-            window.alert(
-              "Speichern online nicht moglich. Lokal: python3 server.py, dann export_projects.py."
-            );
-            return;
-          }
-          const formData = new FormData(form);
-          const title = String(formData.get("title") || "").trim();
-          const description = String(formData.get("description") || "").trim();
-          const link = String(formData.get("link") || "").trim();
-          const demoUrl = String(formData.get("demoUrl") || "").trim();
-          const githubUrl = String(formData.get("githubUrl") || "").trim();
-          const imageFile = formData.get("image");
-
-          if (!title || !description) return;
-
-          let imageDataUrl = "";
-          if (imageFile instanceof File && imageFile.size > 0) {
-            try {
-              imageDataUrl = await fileToDataUrl(imageFile);
-            } catch (_error) {
-              imageDataUrl = "";
-            }
-          }
-
-          const currentId = String(idInput.value || "");
-          let imageSrc = "";
-          let imageDataUrlOut = imageDataUrl;
-          if (currentId) {
-            const previous = readProjects().find((item) => item.id === currentId);
-            if (previous) {
-              if (!imageDataUrlOut) {
-                imageDataUrlOut = previous.imageDataUrl || "";
-                imageSrc = previous.imageSrc || "";
-              }
-            }
-          }
-
-          const payload = {
-            title: title,
-            description: description,
-            link: link,
-            demoUrl: demoUrl,
-            githubUrl: githubUrl,
-            imageSrc: imageSrc,
-            imageDataUrl: imageDataUrlOut,
-          };
-
-          let response;
-          if (currentId) {
-            payload.id = Number(currentId);
-            response = await fetch("/api/projects", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify(payload),
-            });
-          } else {
-            response = await fetch("/api/projects", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify(payload),
-            });
-          }
-
-          if (!response.ok) {
-            let msg = "Speichern fehlgeschlagen.";
-            try {
-              const err = await response.json();
-              if (err.error) msg = err.error;
-            } catch (_e) {}
-            window.alert(msg);
-            return;
-          }
-
-          await loadProjects();
-          resetEditMode();
-        });
-
-        cancelEditButton.addEventListener("click", function () {
-          resetEditMode();
-        });
-
-        deleteProjectButton.addEventListener("click", async function () {
-          const currentId = String(idInput.value || "");
-          if (!currentId) return;
-          const shouldDelete = window.confirm("Projekt wirklich loschen?");
-          if (!shouldDelete) return;
-          const response = await fetch(
-            "/api/projects?id=" + encodeURIComponent(currentId),
-            { method: "DELETE", credentials: "include" }
-          );
-          if (!response.ok) {
-            let msg = "Loschen fehlgeschlagen.";
-            try {
-              const err = await response.json();
-              if (err.error) msg = err.error;
-            } catch (_e) {}
-            window.alert(msg);
-            return;
-          }
-          await loadProjects();
-          resetEditMode();
-        });
+        if (!list) return;
 
         list.addEventListener("click", function (event) {
           const target = event.target;
@@ -639,47 +244,11 @@
             }
             return;
           }
-
-          if (action === "bearbeitung") {
-            event.stopPropagation();
-            const thisMenu = document.getElementById("menu-" + projectId);
-            if (thisMenu) {
-              thisMenu.hidden = true;
-            }
-            if (!apiAuth.authenticated) {
-              openLoginPanel();
-              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
-              const loginMessage = document.getElementById("login-message");
-              if (loginMessage) {
-                loginMessage.textContent = isFileProtocol()
-                  ? "Bitte Seite uber http://localhost:PORT/projekte.html offnen (nicht als lokale Datei)."
-                  : "Bitte zuerst mit deiner autorisierten E-Mail und dem Server-Passwort anmelden.";
-              }
-              return;
-            }
-
-            editingProjectId = projectId;
-            idInput.value = projectId;
-            titleInput.value = project.title || "";
-            descriptionInput.value = project.description || "";
-            linkInput.value = project.link || "";
-            demoUrlInput.value = project.demoUrl || "";
-            githubUrlInput.value = project.githubUrl || "";
-            imageInput.value = "";
-            saveButton.textContent = "Projekt aktualisieren";
-            cancelEditButton.hidden = false;
-            deleteProjectButton.hidden = false;
-            form.hidden = false;
-            form.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
         });
 
         document.addEventListener("click", function (event) {
           const target = event.target;
           if (!(target instanceof HTMLElement)) return;
-          if (!target.closest("#login-box")) {
-            closeLoginPanel();
-          }
           const clickedInsideMenu = target.closest(".project-menu-wrapper");
           if (clickedInsideMenu) return;
           const allMenus = list.querySelectorAll(".project-menu");
@@ -692,7 +261,6 @@
 
         document.addEventListener("keydown", function (event) {
           if (event.key !== "Escape") return;
-          closeLoginPanel();
           const allMenus = list.querySelectorAll(".project-menu");
           allMenus.forEach((menuElement) => {
             if (menuElement instanceof HTMLElement) {
@@ -702,67 +270,9 @@
         });
       }
 
-      function initLogin() {
-        const loginForm = document.getElementById("login-form");
-        const loginMessage = document.getElementById("login-message");
-        const logoutBtn = document.getElementById("logout-btn");
-
-        loginForm.addEventListener("submit", async function (event) {
-          event.preventDefault();
-          loginMessage.textContent = "";
-          const formData = new FormData(loginForm);
-          const email = String(formData.get("email") || "").trim().toLowerCase();
-          const password = String(formData.get("password") || "");
-
-          if (isFileProtocol()) {
-            loginMessage.textContent =
-              "Anmeldung nicht moglich bei file://. Bitte Seite uber http://localhost:PORT/projekte.html offnen (Server: python3 server.py).";
-            return;
-          }
-          if (staticReadOnly) {
-            loginMessage.textContent =
-              "Anmeldung nur mit lokalem Server (python3 server.py). Online werden Projekte aus projects.json angezeigt.";
-            return;
-          }
-
-          try {
-            const response = await fetch("/api/login", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ email: email, password: password }),
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) {
-              loginMessage.textContent =
-                data.error || "Anmeldung fehlgeschlagen (E-Mail oder Passwort).";
-              return;
-            }
-            loginForm.reset();
-            await refreshAuth();
-            await loadProjects();
-            closeLoginPanel();
-          } catch (_error) {
-            loginMessage.textContent =
-              "Keine Verbindung zum Server. Läuft python3 server.py?";
-          }
-        });
-
-        logoutBtn.addEventListener("click", async function () {
-          try {
-            await fetch("/api/logout", { method: "POST", credentials: "include" });
-          } catch (_e) {}
-          await refreshAuth();
-          await loadProjects();
-          closeLoginPanel();
-        });
-      }
-
       (async function bootstrap() {
-        initLogin();
         await loadProjects();
-        await refreshAuth();
-        initForm();
+        initProjectMenus();
       })();
     </script>
   </body>
