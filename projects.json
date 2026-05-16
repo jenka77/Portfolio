@@ -24,12 +24,12 @@
   {
     "id": 3,
     "title": "Projekt 03 - Teamarbeit",
-    "description": "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung.",
+    "description": "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung.Java: Programming language for the backend . Verwndete Technologien: Vert.x: Toolkit for building reactive applications on the JVM.MariaDB: Relational database management system.Docker: Platform for developing, shipping, and running applications in containers.MQTT: Lightweight messaging protocol for small sensors and mobile devices.Bootstrap: CSS framework for developing responsive and mobile-first websites.Arduino Uno/ESP32: Low-cost, low-power system on a chip microcontroller with integrated Wi-Fi and dual-mode Bluetooth.",
     "link": "",
     "demo_url": "",
-    "github_url": "",
-    "image_src": "Bildschirmfoto_vom_2026-05-10_13-27-18-removebg-preview.png",
+    "github_url": "https://github.com/jenka77/Quizz-Game-.git",
+    "image_src": "Informatik-Projekt.png",
     "image_data_url": "",
-    "uploaded_at": "2026-03-28T15:45:00.000Z"
+    "uploaded_at": "2026-05-16T11:37:00.000Z"
   }
 ]
