@@ -10,6 +10,8 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from export_projects import export_projects_to_json
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "portfolio.db"
@@ -34,6 +36,13 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def sync_projects_json():
+    try:
+        export_projects_to_json(force=True)
+    except (OSError, SystemExit):
+        pass
 
 
 def init_db():
@@ -293,6 +302,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             finally:
                 conn.close()
 
+            sync_projects_json()
             self._json(201, {"ok": True})
             return
 
@@ -358,6 +368,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
         finally:
             conn.close()
 
+        sync_projects_json()
         self._json(200, {"ok": True})
 
     def do_DELETE(self):
@@ -387,6 +398,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
         finally:
             conn.close()
 
+        sync_projects_json()
         self._json(200, {"ok": True})
 
 

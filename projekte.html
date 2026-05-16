@@ -31,8 +31,8 @@
         <h2>Projekte und Realisationen</h2>
         <p>
           Diese Liste wird automatisch nach Upload-Datum sortiert (neueste
-          zuerst). Lokal mit Server: SQLite. Online (GitHub Pages):
-          <code>projects.json</code> im Repository.
+          zuerst). Lokal: SQLite. Online (Render): Daten aus Git
+          (<code>portfolio.db</code> + <code>projects.json</code>).
         </p>
         <p id="projects-server-hint" class="projects-server-hint"></p>
 
@@ -244,8 +244,8 @@
           projectsCache = Array.isArray(rows) ? normalizeProjects(rows) : [];
           setStaticReadOnlyUi(false);
           setServerHint(
-            "Bearbeitungsmodus aktiv (Python-Server). Nach Anderungen fur GitHub Pages: " +
-              "<code>python3 export_projects.py</code>, dann <code>projects.json</code> committen.",
+            "Bearbeitungsmodus aktiv. Nach Anderungen fur Render: " +
+              "<code>git add portfolio.db projects.json</code>, commit, push (Auto-Deploy).",
             false
           );
         } catch (_apiError) {
@@ -255,7 +255,9 @@
             setServerHint(
               "<strong>Nur-Lese-Modus (statische Seite).</strong> Projekte aus " +
                 "<code>projects.json</code>. Zum Hinzufugen lokal: <code>python3 server.py</code>, " +
-                "Projekte pflegen, dann <code>python3 export_projects.py</code> und Git push.",
+                "Projekte pflegen, dann <code>git push</code>. "
+                + "JSON manuell geandert? <code>python3 import_projects.py</code> — "
+                + "nicht <code>export_projects.py</code> (uberschreibt JSON).",
               false
             );
           } catch (_jsonError) {
