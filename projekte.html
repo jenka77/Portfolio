@@ -31,12 +31,10 @@
         <h2>Projekte und Realisationen</h2>
         <p>
           Diese Liste wird automatisch nach Upload-Datum sortiert (neueste
-          zuerst). Die Projekte werden auf dem Server gespeichert (SQLite) —
-          bitte diese Seite uber denselben Host offnen wie
-          <code>python3 server.py</code> (z.&nbsp;B.
-          <code>http://localhost:8000/projekte.html</code>), nicht als
-          <code>file://</code>-Datei.
+          zuerst). Lokal mit Server: SQLite. Online (GitHub Pages):
+          <code>projects.json</code> im Repository.
         </p>
+        <p id="projects-server-hint" class="projects-server-hint"></p>
 
         <div id="projects-list" class="cards"></div>
 
@@ -58,7 +56,9 @@
             <input
               id="project-link"
               name="link"
-              type="url"
+              type="text"
+              inputmode="url"
+              autocomplete="off"
               placeholder="https://..."
             />
 
@@ -66,7 +66,9 @@
             <input
               id="project-demo-url"
               name="demoUrl"
-              type="url"
+              type="text"
+              inputmode="url"
+              autocomplete="off"
               placeholder="https://..."
             />
 
@@ -74,7 +76,9 @@
             <input
               id="project-github-url"
               name="githubUrl"
-              type="url"
+              type="text"
+              inputmode="url"
+              autocomplete="off"
               placeholder="https://github.com/..."
             />
 
@@ -99,9 +103,11 @@
         <div id="login-box" class="owner-tools" hidden>
           <h3>Projektverwaltung Login</h3>
           <p>
-            Anmeldung am Server: autorisierte E-Mail und das Admin-Passwort
-            (Umgebungsvariable <code>PORTFOLIO_ADMIN_PASSWORD</code>, sonst
-            Vorgabe im <code>server.py</code>).
+            Anmeldung am Server: eine der erlaubten E-Mails und das
+            <strong>Admin-Passwort</strong> (Umgebungsvariable
+            <code>PORTFOLIO_ADMIN_PASSWORD</code>). Ohne Variable lautet die
+            Vorgabe im Entwicklungsmodus <code>ChangeMeNow123!</code> — bitte in
+            Produktion unbedingt andern.
           </p>
           <form id="login-form" class="project-form">
             <label for="login-email">E-Mail</label>
@@ -136,17 +142,52 @@
       const apiAuth = { authenticated: false, email: null };
       let projectsCache = [];
       let editingProjectId = null;
+      /** true = GitHub Pages / ohne Python-API; nur Anzeige aus projects.json */
+      let staticReadOnly = false;
 
       function readProjects() {
         return projectsCache;
       }
 
+      const FETCH_OPTS = { credentials: "include" };
+
+      function isFileProtocol() {
+        return window.location.protocol === "file:";
+      }
+
+      function setServerHint(html, asError) {
+        const el = document.getElementById("projects-server-hint");
+        if (!el) return;
+        el.innerHTML = html;
+        el.classList.toggle("projects-server-hint--error", Boolean(asError));
+        el.hidden = !html;
+      }
+
+      function setStaticReadOnlyUi(isStatic) {
+        staticReadOnly = isStatic;
+        const fab = document.getElementById("fab-add-project");
+        if (fab) {
+          fab.hidden = isStatic;
+        }
+      }
+
       async function refreshAuth() {
+        if (isFileProtocol() || staticReadOnly) {
+          apiAuth.authenticated = false;
+          apiAuth.email = null;
+          toggleOwnerUi(false, "");
+          return;
+        }
         try {
-          const response = await fetch("/api/me", { credentials: "same-origin" });
-          const data = await response.json();
-          apiAuth.authenticated = Boolean(data.authenticated);
-          apiAuth.email = data.email || null;
+          const response = await fetch("/api/me", FETCH_OPTS);
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            apiAuth.authenticated = false;
+            apiAuth.email = null;
+          } else {
+            apiAuth.authenticated = Boolean(data.authenticated);
+            apiAuth.email = data.email || null;
+          }
         } catch (_error) {
           apiAuth.authenticated = false;
           apiAuth.email = null;
@@ -154,22 +195,84 @@
         toggleOwnerUi(apiAuth.authenticated, apiAuth.email || "");
       }
 
+      async function loadProjectsFromJson() {
+        const response = await fetch("projects.json", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+        const rows = await response.json();
+        return Array.isArray(rows) ? normalizeProjects(rows) : [];
+      }
+
       async function loadProjects() {
         const list = document.getElementById("projects-list");
+        if (isFileProtocol()) {
+          projectsCache = [];
+          setStaticReadOnlyUi(false);
+          try {
+            projectsCache = await loadProjectsFromJson();
+            setServerHint(
+              "Vorschau aus <code>projects.json</code> (Datei geoffnet per <code>file://</code>). " +
+                "Zum Bearbeiten: <code>python3 server.py</code>, dann " +
+                "<code>http://localhost:8000/projekte.html</code>.",
+              false
+            );
+            renderProjects();
+          } catch (_error) {
+            setServerHint(
+              "Diese Seite wurde als lokale Datei geoffnet (<code>file://</code>). " +
+                "Bitte den Server starten: <code>python3 server.py</code>, dann im Browser " +
+                "<code>http://localhost:8000/projekte.html</code> offnen.",
+              true
+            );
+            if (list) {
+              list.innerHTML = "";
+            }
+          }
+          return;
+        }
+
+        setServerHint("", false);
+
         try {
-          const response = await fetch("/api/projects", { credentials: "same-origin" });
+          const response = await fetch("/api/projects", FETCH_OPTS);
           if (!response.ok) {
             throw new Error("HTTP " + response.status);
           }
           const data = await response.json();
-          projectsCache = normalizeProjects(data.projects || []);
-        } catch (_error) {
-          projectsCache = [];
-          if (list) {
-            list.innerHTML =
-              '<p class="project-date">Projekte konnten nicht geladen werden. Starte den Server mit <code>python3 server.py</code> und offne diese Seite uber <code>http://localhost:PORT/projekte.html</code> (nicht als lokale Datei).</p>';
+          const rows = data.projects;
+          projectsCache = Array.isArray(rows) ? normalizeProjects(rows) : [];
+          setStaticReadOnlyUi(false);
+          setServerHint(
+            "Bearbeitungsmodus aktiv (Python-Server). Nach Anderungen fur GitHub Pages: " +
+              "<code>python3 export_projects.py</code>, dann <code>projects.json</code> committen.",
+            false
+          );
+        } catch (_apiError) {
+          try {
+            projectsCache = await loadProjectsFromJson();
+            setStaticReadOnlyUi(true);
+            setServerHint(
+              "<strong>Nur-Lese-Modus (statische Seite).</strong> Projekte aus " +
+                "<code>projects.json</code>. Zum Hinzufugen lokal: <code>python3 server.py</code>, " +
+                "Projekte pflegen, dann <code>python3 export_projects.py</code> und Git push.",
+              false
+            );
+          } catch (_jsonError) {
+            projectsCache = [];
+            setStaticReadOnlyUi(true);
+            setServerHint(
+              "<strong>Projekte konnten nicht geladen werden.</strong> " +
+                "Lokal: <code>python3 server.py</code> starten. Online: <code>projects.json</code> " +
+                "muss im Repository liegen.",
+              true
+            );
+            if (list) {
+              list.innerHTML =
+                '<p class="project-date">Keine Daten (weder API noch projects.json).</p>';
+            }
+            return;
           }
-          return;
         }
         renderProjects();
       }
@@ -206,6 +309,9 @@
       }
 
       function normalizeProjects(rows) {
+        if (!Array.isArray(rows)) {
+          return [];
+        }
         return rows.map((project) => {
           const baseId =
             project.id != null ? project.id : project.uploadedAt || String(Math.random());
@@ -267,9 +373,11 @@
               '" ' +
               (hasGithub ? "" : "disabled") +
               ">Github</button>" +
-              '<button type="button" class="project-menu-item" data-action="bearbeitung" data-id="' +
-              escapeHtml(project.id) +
-              '">Projekt bearbeiten</button>' +
+              (staticReadOnly
+                ? ""
+                : '<button type="button" class="project-menu-item" data-action="bearbeitung" data-id="' +
+                  escapeHtml(project.id) +
+                  '">Projekt bearbeiten</button>') +
               "</div>" +
               "</div>";
 
@@ -331,6 +439,26 @@
         if (fabAdd) {
           fabAdd.addEventListener("click", function (event) {
             event.stopPropagation();
+            if (isFileProtocol()) {
+              openLoginPanel();
+              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
+              const loginMessage = document.getElementById("login-message");
+              if (loginMessage) {
+                loginMessage.textContent =
+                  "Bitte Seite uber http://localhost:PORT/projekte.html offnen (nicht als lokale Datei).";
+              }
+              return;
+            }
+            if (staticReadOnly) {
+              const loginMessage = document.getElementById("login-message");
+              openLoginPanel();
+              loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
+              if (loginMessage) {
+                loginMessage.textContent =
+                  "Online nur Anzeige. Lokal server starten, Projekt anlegen, dann python3 export_projects.py und Git push.";
+              }
+              return;
+            }
             if (!apiAuth.authenticated) {
               openLoginPanel();
               loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -366,6 +494,12 @@
 
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
+          if (staticReadOnly) {
+            window.alert(
+              "Speichern online nicht moglich. Lokal: python3 server.py, dann export_projects.py."
+            );
+            return;
+          }
           const formData = new FormData(form);
           const title = String(formData.get("title") || "").trim();
           const description = String(formData.get("description") || "").trim();
@@ -414,14 +548,14 @@
             response = await fetch("/api/projects", {
               method: "PUT",
               headers: { "Content-Type": "application/json" },
-              credentials: "same-origin",
+              credentials: "include",
               body: JSON.stringify(payload),
             });
           } else {
             response = await fetch("/api/projects", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              credentials: "same-origin",
+              credentials: "include",
               body: JSON.stringify(payload),
             });
           }
@@ -451,7 +585,7 @@
           if (!shouldDelete) return;
           const response = await fetch(
             "/api/projects?id=" + encodeURIComponent(currentId),
-            { method: "DELETE", credentials: "same-origin" }
+            { method: "DELETE", credentials: "include" }
           );
           if (!response.ok) {
             let msg = "Loschen fehlgeschlagen.";
@@ -515,8 +649,9 @@
               loginBox.scrollIntoView({ behavior: "smooth", block: "center" });
               const loginMessage = document.getElementById("login-message");
               if (loginMessage) {
-                loginMessage.textContent =
-                  "Bitte zuerst mit deiner autorisierten E-Mail und dem Server-Passwort anmelden.";
+                loginMessage.textContent = isFileProtocol()
+                  ? "Bitte Seite uber http://localhost:PORT/projekte.html offnen (nicht als lokale Datei)."
+                  : "Bitte zuerst mit deiner autorisierten E-Mail und dem Server-Passwort anmelden.";
               }
               return;
             }
@@ -577,11 +712,22 @@
           const email = String(formData.get("email") || "").trim().toLowerCase();
           const password = String(formData.get("password") || "");
 
+          if (isFileProtocol()) {
+            loginMessage.textContent =
+              "Anmeldung nicht moglich bei file://. Bitte Seite uber http://localhost:PORT/projekte.html offnen (Server: python3 server.py).";
+            return;
+          }
+          if (staticReadOnly) {
+            loginMessage.textContent =
+              "Anmeldung nur mit lokalem Server (python3 server.py). Online werden Projekte aus projects.json angezeigt.";
+            return;
+          }
+
           try {
             const response = await fetch("/api/login", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              credentials: "same-origin",
+              credentials: "include",
               body: JSON.stringify({ email: email, password: password }),
             });
             const data = await response.json().catch(() => ({}));
@@ -602,7 +748,7 @@
 
         logoutBtn.addEventListener("click", async function () {
           try {
-            await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
+            await fetch("/api/logout", { method: "POST", credentials: "include" });
           } catch (_e) {}
           await refreshAuth();
           await loadProjects();
@@ -612,8 +758,8 @@
 
       (async function bootstrap() {
         initLogin();
-        await refreshAuth();
         await loadProjects();
+        await refreshAuth();
         initForm();
       })();
     </script>

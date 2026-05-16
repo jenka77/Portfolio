@@ -59,6 +59,17 @@ def init_db():
             conn.execute("ALTER TABLE projects ADD COLUMN demo_url TEXT DEFAULT ''")
         if "github_url" not in cols:
             conn.execute("ALTER TABLE projects ADD COLUMN github_url TEXT DEFAULT ''")
+        for wrong, fixed in (
+            ("portofoliobild.jpeg", "webart.jpg"),
+            (
+                "WhatsApp Image 2026-05-09 at 09.23.21.jpeg",
+                "Bildschirmfoto_vom_2026-05-10_13-27-18-removebg-preview.png",
+            ),
+        ):
+            conn.execute(
+                "UPDATE projects SET image_src = ? WHERE image_src = ?",
+                (fixed, wrong),
+            )
         count = conn.execute("SELECT COUNT(*) AS c FROM projects").fetchone()["c"]
         if count == 0:
             seed_projects = [
@@ -78,7 +89,7 @@ def init_db():
                     "",
                     "",
                     "",
-                    "portofoliobild.jpeg",
+                    "webart.jpg",
                     "",
                     "2026-04-20T09:30:00.000Z",
                 ),
@@ -88,7 +99,7 @@ def init_db():
                     "",
                     "",
                     "",
-                    "WhatsApp Image 2026-05-09 at 09.23.21.jpeg",
+                    "Bildschirmfoto_vom_2026-05-10_13-27-18-removebg-preview.png",
                     "",
                     "2026-03-28T15:45:00.000Z",
                 ),
@@ -176,6 +187,8 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
                 ).fetchall()
                 projects = [dict(row) for row in rows]
                 self._json(200, {"projects": projects})
+            except sqlite3.Error as exc:
+                self._json(500, {"error": "Datenbankfehler.", "detail": str(exc)})
             finally:
                 conn.close()
             return

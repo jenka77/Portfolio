@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "title": "Projekt 01 - Portfolio Website",
+    "description": "Eine responsive Website mit modernem Design zur Prasentation meiner Person und meiner Arbeiten.",
+    "link": "",
+    "demo_url": "",
+    "github_url": "",
+    "image_src": "portofolio.jpeg",
+    "image_data_url": "",
+    "uploaded_at": "2026-05-01T08:00:00.000Z"
+  },
+  {
+    "id": 2,
+    "title": "Projekt 02 - Lernprojekt",
+    "description": "Entwicklung eines kleinen Tools, um praktische Erfahrung in HTML, CSS und JavaScript zu vertiefen.",
+    "link": "",
+    "demo_url": "",
+    "github_url": "",
+    "image_src": "webart.jpg",
+    "image_data_url": "",
+    "uploaded_at": "2026-04-20T09:30:00.000Z"
+  },
+  {
+    "id": 3,
+    "title": "Projekt 03 - Teamarbeit",
+    "description": "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung.",
+    "link": "",
+    "demo_url": "",
+    "github_url": "",
+    "image_src": "Bildschirmfoto_vom_2026-05-10_13-27-18-removebg-preview.png",
+    "image_data_url": "",
+    "uploaded_at": "2026-03-28T15:45:00.000Z"
+  }
+]
