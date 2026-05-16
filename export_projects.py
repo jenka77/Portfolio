@@ -31,9 +31,13 @@ def export_projects_to_json(db_path=DB_PATH, out_path=OUT_PATH, force=False):
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     try:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
+        if "video_url" not in cols:
+            conn.execute("ALTER TABLE projects ADD COLUMN video_url TEXT DEFAULT ''")
+            conn.commit()
         rows = conn.execute(
             """
-            SELECT id, title, description, link, demo_url, github_url,
+            SELECT id, title, description, link, demo_url, video_url, github_url,
                    image_src, image_data_url, uploaded_at
             FROM projects
             ORDER BY datetime(uploaded_at) DESC

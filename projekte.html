@@ -131,6 +131,7 @@
             description: project.description || "",
             link: project.link || "",
             demoUrl: project.demo_url || project.demoUrl || "",
+            videoUrl: project.video_url || project.videoUrl || "",
             githubUrl: project.github_url || project.githubUrl || "",
             imageSrc: project.image_src || project.imageSrc || "",
             imageDataUrl: project.image_data_url || project.imageDataUrl || "",
@@ -164,28 +165,33 @@
                 '" target="_blank" rel="noopener noreferrer">Projekt ansehen</a></p>'
               : "";
             const hasDemo = Boolean(project.demoUrl);
+            const hasVideo = Boolean(project.videoUrl);
             const hasGithub = Boolean(project.githubUrl);
-            const menu = hasDemo || hasGithub
-              ? '<div class="project-menu-wrapper">' +
-                '<button class="project-menu-toggle" type="button" data-action="toggle-menu" data-id="' +
-                escapeHtml(project.id) +
-                '" aria-label="Projektmenu">...</button>' +
-                '<div class="project-menu" id="menu-' +
-                escapeHtml(project.id) +
-                '" hidden>' +
-                (hasDemo
-                  ? '<button type="button" class="project-menu-item" data-action="live-demo" data-id="' +
-                    escapeHtml(project.id) +
-                    '">Live Demo</button>'
-                  : "") +
-                (hasGithub
-                  ? '<button type="button" class="project-menu-item" data-action="github" data-id="' +
-                    escapeHtml(project.id) +
-                    '">Github</button>'
-                  : "") +
-                "</div>" +
-                "</div>"
-              : "";
+            const menu =
+              '<div class="project-menu-wrapper">' +
+              '<button class="project-menu-toggle" type="button" data-action="toggle-menu" data-id="' +
+              escapeHtml(project.id) +
+              '" aria-label="Projektmenu">...</button>' +
+              '<div class="project-menu" id="menu-' +
+              escapeHtml(project.id) +
+              '" hidden>' +
+              '<button type="button" class="project-menu-item" data-action="live-demo" data-id="' +
+              escapeHtml(project.id) +
+              '" ' +
+              (hasDemo ? "" : "disabled") +
+              ">Live Demo</button>" +
+              '<button type="button" class="project-menu-item" data-action="video-demo" data-id="' +
+              escapeHtml(project.id) +
+              '" ' +
+              (hasVideo ? "" : "disabled") +
+              ">Video Demo</button>" +
+              (hasGithub
+                ? '<button type="button" class="project-menu-item" data-action="github" data-id="' +
+                  escapeHtml(project.id) +
+                  '">Github</button>'
+                : "") +
+              "</div>" +
+              "</div>";
 
             return (
               '<article class="card">' +
@@ -234,6 +240,13 @@
           if (action === "live-demo") {
             if (project.demoUrl) {
               window.open(project.demoUrl, "_blank", "noopener,noreferrer");
+            }
+            return;
+          }
+
+          if (action === "video-demo") {
+            if (project.videoUrl) {
+              window.open(project.videoUrl, "_blank", "noopener,noreferrer");
             }
             return;
           }

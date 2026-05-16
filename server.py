@@ -56,6 +56,7 @@ def init_db():
                 description TEXT NOT NULL,
                 link TEXT DEFAULT '',
                 demo_url TEXT DEFAULT '',
+                video_url TEXT DEFAULT '',
                 github_url TEXT DEFAULT '',
                 image_src TEXT DEFAULT '',
                 image_data_url TEXT DEFAULT '',
@@ -66,6 +67,8 @@ def init_db():
         cols = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
         if "demo_url" not in cols:
             conn.execute("ALTER TABLE projects ADD COLUMN demo_url TEXT DEFAULT ''")
+        if "video_url" not in cols:
+            conn.execute("ALTER TABLE projects ADD COLUMN video_url TEXT DEFAULT ''")
         if "github_url" not in cols:
             conn.execute("ALTER TABLE projects ADD COLUMN github_url TEXT DEFAULT ''")
         for wrong, fixed in (
@@ -88,6 +91,7 @@ def init_db():
                     "",
                     "",
                     "",
+                    "",
                     "portofolio.jpeg",
                     "",
                     "2026-05-01T08:00:00.000Z",
@@ -95,6 +99,7 @@ def init_db():
                 (
                     "Projekt 02 - Lernprojekt",
                     "Entwicklung eines kleinen Tools, um praktische Erfahrung in HTML, CSS und JavaScript zu vertiefen.",
+                    "",
                     "",
                     "",
                     "",
@@ -108,6 +113,7 @@ def init_db():
                     "",
                     "",
                     "",
+                    "",
                     "Bildschirmfoto_vom_2026-05-10_13-27-18-removebg-preview.png",
                     "",
                     "2026-03-28T15:45:00.000Z",
@@ -115,9 +121,9 @@ def init_db():
             ]
             conn.executemany(
                 """
-                INSERT INTO projects (title, description, link, demo_url, github_url,
+                INSERT INTO projects (title, description, link, demo_url, video_url, github_url,
                                       image_src, image_data_url, uploaded_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 seed_projects,
             )
@@ -188,7 +194,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             try:
                 rows = conn.execute(
                     """
-                    SELECT id, title, description, link, demo_url, github_url,
+                    SELECT id, title, description, link, demo_url, video_url, github_url,
                            image_src, image_data_url, uploaded_at
                     FROM projects
                     ORDER BY datetime(uploaded_at) DESC
@@ -271,6 +277,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             description = str(payload.get("description", "")).strip()
             link = str(payload.get("link", "")).strip()
             demo_url = str(payload.get("demoUrl", "")).strip()
+            video_url = str(payload.get("videoUrl", "")).strip()
             github_url = str(payload.get("githubUrl", "")).strip()
             image_src = str(payload.get("imageSrc", "")).strip()
             image_data_url = str(payload.get("imageDataUrl", "")).strip()
@@ -283,15 +290,16 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             try:
                 conn.execute(
                     """
-                    INSERT INTO projects (title, description, link, demo_url, github_url,
+                    INSERT INTO projects (title, description, link, demo_url, video_url, github_url,
                                           image_src, image_data_url, uploaded_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         title,
                         description,
                         link,
                         demo_url,
+                        video_url,
                         github_url,
                         image_src,
                         image_data_url,
@@ -333,6 +341,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
         description = str(payload.get("description", "")).strip()
         link = str(payload.get("link", "")).strip()
         demo_url = str(payload.get("demoUrl", "")).strip()
+        video_url = str(payload.get("videoUrl", "")).strip()
         github_url = str(payload.get("githubUrl", "")).strip()
         image_src = str(payload.get("imageSrc", "")).strip()
         image_data_url = str(payload.get("imageDataUrl", "")).strip()
@@ -346,7 +355,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
             cur = conn.execute(
                 """
                 UPDATE projects
-                SET title = ?, description = ?, link = ?, demo_url = ?, github_url = ?,
+                SET title = ?, description = ?, link = ?, demo_url = ?, video_url = ?, github_url = ?,
                     image_src = ?, image_data_url = ?
                 WHERE id = ?
                 """,
@@ -355,6 +364,7 @@ class PortfolioHandler(SimpleHTTPRequestHandler):
                     description,
                     link,
                     demo_url,
+                    video_url,
                     github_url,
                     image_src,
                     image_data_url,

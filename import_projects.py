@@ -19,6 +19,9 @@ def import_projects_from_json(json_path=IN_PATH, db_path=DB_PATH):
 
     conn = sqlite3.connect(db_path)
     try:
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(projects)")}
+        if "video_url" not in cols:
+            conn.execute("ALTER TABLE projects ADD COLUMN video_url TEXT DEFAULT ''")
         conn.execute("DELETE FROM projects")
         for project in raw:
             if not isinstance(project, dict):
@@ -30,15 +33,16 @@ def import_projects_from_json(json_path=IN_PATH, db_path=DB_PATH):
             conn.execute(
                 """
                 INSERT INTO projects (
-                    title, description, link, demo_url, github_url,
+                    title, description, link, demo_url, video_url, github_url,
                     image_src, image_data_url, uploaded_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     title,
                     description,
                     str(project.get("link", "")).strip(),
                     str(project.get("demo_url", project.get("demoUrl", ""))).strip(),
+                    str(project.get("video_url", project.get("videoUrl", ""))).strip(),
                     str(project.get("github_url", project.get("githubUrl", ""))).strip(),
                     str(project.get("image_src", project.get("imageSrc", ""))).strip(),
                     str(project.get("image_data_url", project.get("imageDataUrl", ""))).strip(),
