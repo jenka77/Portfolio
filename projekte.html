@@ -165,7 +165,6 @@
                 '" target="_blank" rel="noopener noreferrer">Projekt ansehen</a></p>'
               : "";
             const hasDemo = Boolean(project.demoUrl);
-            const hasVideo = Boolean(project.videoUrl);
             const hasGithub = Boolean(project.githubUrl);
             const menu =
               '<div class="project-menu-wrapper">' +
@@ -180,11 +179,6 @@
               '" ' +
               (hasDemo ? "" : "disabled") +
               ">Live Demo</button>" +
-              '<button type="button" class="project-menu-item" data-action="video-demo" data-id="' +
-              escapeHtml(project.id) +
-              '" ' +
-              (hasVideo ? "" : "disabled") +
-              ">Video Demo</button>" +
               (hasGithub
                 ? '<button type="button" class="project-menu-item" data-action="github" data-id="' +
                   escapeHtml(project.id) +
@@ -243,14 +237,6 @@
             }
             return;
           }
-
-          if (action === "video-demo") {
-            if (project.videoUrl) {
-              window.open(project.videoUrl, "_blank", "noopener,noreferrer");
-            }
-            return;
-          }
-
           if (action === "github") {
             if (project.githubUrl) {
               window.open(project.githubUrl, "_blank", "noopener,noreferrer");
