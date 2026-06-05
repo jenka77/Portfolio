@@ -1,0 +1,10 @@
+# Vercel doit deployer ce portfolio comme site statique.
+# Ces fichiers servent uniquement au developpement local / Render.
+server.py
+requirements.txt
+portfolio.db
+import_projects.py
+export_projects.py
+__pycache__/
+*.pyc
+projects.json.bak
