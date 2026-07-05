@@ -34,25 +34,17 @@
     "image_src": "Informatik-Projekt.png",
     "image_data_url": "",
     "uploaded_at": "2026-05-16T11:37:00.000Z"
-  }
+  },
   {
     "id": 4,
-    "title": "Projekt 03 - Personal Project-E-commerce_website",
-    "description":"Jen's & Floran — E-Commerce-Plattform ,
-    Entwicklung eines vollständigen Online-Shops für eine Perücken-Marke mit mehrsprachiger Oberfläche (Deutsch, Französisch, Englisch), Produktkatalog, Warenkorb und sicherer PayPal-Zahlung.
-    
-    Frontend: Responsive Website mit HTML5, CSS3 und Vanilla JavaScript — ohne Framework, mit eigener i18n-Lösung, Supabase Auth (Registrierung, Login, Passwort-Reset) und clientseitigem Storage-Upload.
-    
-    Backend: REST-API mit Node.js und Express, Validierung mit Zod, JWT-Authentifizierung über Supabase, PayPal-Integration (Create & Capture Order) sowie E-Mail-Benachrichtigungen via Resend.
-    
-    Infrastruktur: Supabase (PostgreSQL, Row Level Security, Storage), Deployment auf Vercel (Frontend) und Render (Backend)",
+    "title": "Projekt 04 - Personal Project E-commerce Website",
+    "description": "Jen's & Floran — E-Commerce-Plattform. Entwicklung eines vollständigen Online-Shops für eine Perücken-Marke mit mehrsprachiger Oberfläche (Deutsch, Französisch, Englisch), Produktkatalog, Warenkorb und sicherer PayPal-Zahlung. Frontend: Responsive Website mit HTML5, CSS3 und Vanilla JavaScript — ohne Framework, mit eigener i18n-Lösung, Supabase Auth (Registrierung, Login, Passwort-Reset) und clientseitigem Storage-Upload. Backend: REST-API mit Node.js und Express, Validierung mit Zod, JWT-Authentifizierung über Supabase, PayPal-Integration (Create & Capture Order) sowie E-Mail-Benachrichtigungen via Resend. Infrastruktur: Supabase (PostgreSQL, Row Level Security, Storage), Deployment auf Vercel (Frontend) und Render (Backend).",
     "link": "",
     "demo_url": "https://www.jens-flora.com",
     "video_url": "",
     "github_url": "",
-    "image_src": "Jen'sHair Project.png",
+    "image_src": "Jen'sHair Projekt .png",
     "image_data_url": "",
     "uploaded_at": "2026-07-05T11:37:00.000Z"
   }
-
 ]
