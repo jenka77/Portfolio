@@ -409,14 +409,6 @@ body {
   margin-top: 0.9rem;
 }
 
-.private-page-nav {
-  margin-bottom: 1rem;
-}
-
-.private-page-nav .btn {
-  margin-top: 0;
-}
-
 .project-form {
   margin-top: 1rem;
   display: grid;
