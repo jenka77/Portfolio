@@ -514,7 +514,17 @@ body {
 }
 
 .contact {
-  padding-bottom: 5rem;
+  padding-bottom: 2rem;
+}
+
+.projects-cta {
+  padding-top: 0;
+  padding-bottom: 4rem;
+  text-align: center;
+}
+
+.projects-cta .btn {
+  margin-top: 0;
 }
 
 .contact-phone {
