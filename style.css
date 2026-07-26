@@ -522,9 +522,15 @@ body {
 
 .card a,
 .card a:visited,
-.contact a,
-.contact a:visited {
+.contact a:not(.btn),
+.contact a:not(.btn):visited {
   color: var(--link);
+}
+
+.contact a.btn,
+.contact a.btn:visited,
+.contact a.btn:hover {
+  color: var(--white);
 }
 
 .projects-page {
