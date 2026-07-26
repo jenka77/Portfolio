@@ -101,28 +101,23 @@ body {
   margin-top: 0.6rem;
   border-radius: 1rem;
   overflow: hidden;
-  min-height: auto;
-  display: grid;
-  grid-template-columns: 1fr;
-  background: #1a1d21;
+  padding: 0;
+  background: transparent;
 }
 
 .hero-image-panel {
   position: relative;
   width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
-  aspect-ratio: 4 / 5;
-  max-height: min(78vh, 680px);
+  height: min(78vh, 960px);
   overflow: hidden;
-  background: #2a3038;
+  background: transparent;
 }
 
 .hero-image-panel img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 22%;
+  object-position: center 18%;
   filter: grayscale(1);
   display: block;
 }
@@ -621,14 +616,11 @@ body {
   }
 
   .hero-frame {
-    grid-template-columns: 1fr;
-    min-height: auto;
     margin-top: 0;
   }
 
   .hero-image-panel {
-    max-width: 100%;
-    max-height: min(62vh, 560px);
+    height: min(65vh, 720px);
   }
 
   .hero-image-caption {
@@ -682,8 +674,7 @@ body {
   }
 
   .hero-image-panel {
-    aspect-ratio: 3 / 4;
-    max-height: min(55vh, 480px);
+    height: min(58vh, 520px);
   }
 
   .hero-image-caption {
