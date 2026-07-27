@@ -17,7 +17,7 @@
     "uploadedOn": "Uploaded on:",
     "viewProject": "View project",
     "liveDemo": "Live Demo",
-    "github": "Github",
+    "github": "GitHub / Source Code",
     "menuLabel": "Project menu",
     "imageAlt": "Project image of {{title}}",
     "loadError": "Projects could not be loaded right now.",

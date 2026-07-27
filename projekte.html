@@ -205,13 +205,33 @@
             const safeTitle = escapeHtml(title);
             const safeDescription = escapeHtml(description);
             const imageAlt = escapeHtml(I18n.t("projectsPage.imageAlt", { title }));
-            const safeImage = imageSource
-              ? '<img class="project-image" src="' +
+            const demoLabel = escapeHtml(I18n.t("projectsPage.liveDemo"));
+            const githubLabel = escapeHtml(I18n.t("projectsPage.github"));
+            const hasDemo = Boolean(project.demoUrl);
+            const hasGithub = Boolean(project.githubUrl);
+
+            let imageBlock = "";
+            if (imageSource) {
+              const imageTag =
+                '<img class="project-image" src="' +
                 escapeHtml(imageSource) +
                 '" alt="' +
                 imageAlt +
-                '">'
-              : "";
+                '">';
+              if (hasDemo) {
+                imageBlock =
+                  '<a class="project-image-link" href="' +
+                  escapeHtml(project.demoUrl) +
+                  '" target="_blank" rel="noopener noreferrer" aria-label="' +
+                  demoLabel +
+                  '">' +
+                  imageTag +
+                  "</a>";
+              } else {
+                imageBlock = imageTag;
+              }
+            }
+
             const safeLink = project.link
               ? '<p><a class="project-link" href="' +
                 escapeHtml(project.link) +
@@ -219,39 +239,33 @@
                 escapeHtml(I18n.t("projectsPage.viewProject")) +
                 "</a></p>"
               : "";
-            const hasDemo = Boolean(project.demoUrl);
-            const hasGithub = Boolean(project.githubUrl);
-            const menu =
-              '<div class="project-menu-wrapper">' +
-              '<button class="project-menu-toggle" type="button" data-action="toggle-menu" data-id="' +
-              escapeHtml(project.id) +
-              '" aria-label="' +
-              escapeHtml(I18n.t("projectsPage.menuLabel")) +
-              '">...</button>' +
-              '<div class="project-menu" id="menu-' +
-              escapeHtml(project.id) +
-              '" hidden>' +
-              '<button type="button" class="project-menu-item" data-action="live-demo" data-id="' +
-              escapeHtml(project.id) +
-              '" ' +
-              (hasDemo ? "" : "disabled") +
-              ">" +
-              escapeHtml(I18n.t("projectsPage.liveDemo")) +
-              "</button>" +
-              (hasGithub
-                ? '<button type="button" class="project-menu-item" data-action="github" data-id="' +
-                  escapeHtml(project.id) +
-                  '">' +
-                  escapeHtml(I18n.t("projectsPage.github")) +
-                  "</button>"
-                : "") +
-              "</div>" +
-              "</div>";
+
+            const demoButton = hasDemo
+              ? '<a class="project-action-btn project-action-btn--demo" href="' +
+                escapeHtml(project.demoUrl) +
+                '" target="_blank" rel="noopener noreferrer">🔗 ' +
+                demoLabel +
+                "</a>"
+              : '<span class="project-action-btn project-action-btn--demo project-action-btn--disabled" aria-disabled="true">🔗 ' +
+                demoLabel +
+                "</span>";
+
+            const githubButton = hasGithub
+              ? '<a class="project-action-btn project-action-btn--github" href="' +
+                escapeHtml(project.githubUrl) +
+                '" target="_blank" rel="noopener noreferrer">💻 ' +
+                githubLabel +
+                "</a>"
+              : '<span class="project-action-btn project-action-btn--github project-action-btn--disabled" aria-disabled="true">💻 ' +
+                githubLabel +
+                "</span>";
+
+            const actions =
+              '<div class="project-actions">' + demoButton + githubButton + "</div>";
 
             return (
               '<article class="card">' +
-              safeImage +
-              menu +
+              imageBlock +
               "<h3>" +
               safeTitle +
               "</h3>" +
@@ -264,76 +278,11 @@
               formatDate(project.uploadedAt) +
               "</p>" +
               safeLink +
+              actions +
               "</article>"
             );
           })
           .join("");
-      }
-
-      function initProjectMenus() {
-        const list = document.getElementById("projects-list");
-        if (!list) return;
-
-        list.addEventListener("click", function (event) {
-          const target = event.target;
-          if (!(target instanceof HTMLElement)) return;
-          const action = target.getAttribute("data-action");
-          const projectId = target.getAttribute("data-id");
-          if (!action || !projectId) return;
-
-          const projects = readProjects();
-          const project = projects.find((item) => item.id === projectId);
-          if (!project) return;
-
-          if (action === "toggle-menu") {
-            const allMenus = list.querySelectorAll(".project-menu");
-            allMenus.forEach((menuElement) => {
-              if (!(menuElement instanceof HTMLElement)) return;
-              if (menuElement.id === "menu-" + projectId) {
-                menuElement.hidden = !menuElement.hidden;
-              } else {
-                menuElement.hidden = true;
-              }
-            });
-            return;
-          }
-
-          if (action === "live-demo") {
-            if (project.demoUrl) {
-              window.open(project.demoUrl, "_blank", "noopener,noreferrer");
-            }
-            return;
-          }
-          if (action === "github") {
-            if (project.githubUrl) {
-              window.open(project.githubUrl, "_blank", "noopener,noreferrer");
-            }
-            return;
-          }
-        });
-
-        document.addEventListener("click", function (event) {
-          const target = event.target;
-          if (!(target instanceof HTMLElement)) return;
-          const clickedInsideMenu = target.closest(".project-menu-wrapper");
-          if (clickedInsideMenu) return;
-          const allMenus = list.querySelectorAll(".project-menu");
-          allMenus.forEach((menuElement) => {
-            if (menuElement instanceof HTMLElement) {
-              menuElement.hidden = true;
-            }
-          });
-        });
-
-        document.addEventListener("keydown", function (event) {
-          if (event.key !== "Escape") return;
-          const allMenus = list.querySelectorAll(".project-menu");
-          allMenus.forEach((menuElement) => {
-            if (menuElement instanceof HTMLElement) {
-              menuElement.hidden = true;
-            }
-          });
-        });
       }
 
       function initLanguageSwitcher() {
@@ -353,7 +302,6 @@
         I18n.apply();
         initLanguageSwitcher();
         await loadProjects();
-        initProjectMenus();
       })();
     </script>
   </body>
