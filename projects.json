@@ -1,8 +1,16 @@
 [
   {
     "id": 1,
-    "title": "Projekt 01 - Portfolio Website",
-    "description": "Eine responsive Website mit modernem Design zur Prasentation meiner Person und meiner Arbeiten.rontend:** HTML5, CSS3 (Modern Dark Design), JavaScript (ES6+)",
+    "title": {
+      "de": "Projekt 01 - Portfolio Website",
+      "en": "Project 01 - Portfolio Website",
+      "fr": "Projet 01 - Site portfolio"
+    },
+    "description": {
+      "de": "Eine responsive Website mit modernem Design zur Präsentation meiner Person und meiner Arbeiten. Frontend: HTML5, CSS3 (Modern Dark Design), JavaScript (ES6+).",
+      "en": "A responsive website with a modern design to present my profile and my work. Frontend: HTML5, CSS3 (modern dark design), JavaScript (ES6+).",
+      "fr": "Un site responsive au design moderne pour présenter mon profil et mes réalisations. Frontend : HTML5, CSS3 (design sombre moderne), JavaScript (ES6+)."
+    },
     "link": "",
     "demo_url": "https://portfolionr.vercel.app/index.html",
     "video_url": "",
@@ -13,8 +21,16 @@
   },
   {
     "id": 2,
-    "title": "Projekt 02 - Lernprojekt",
-    "description": "Entwicklung eines kleinen Tools, um praktische Erfahrung in HTML, CSS und JavaScript zu vertiefen.Kleine Web-App zur Aufgabenverwaltung: aufgeräumte Oberfläche (Productivity-Stil), FastAPI-Backend, lokale JSON-Speicherung ohne Datenbank.HTML5,CSS3,Python 3,Javascript",
+    "title": {
+      "de": "Projekt 02 - Lernprojekt",
+      "en": "Project 02 - Learning Project",
+      "fr": "Projet 02 - Projet d'apprentissage"
+    },
+    "description": {
+      "de": "Entwicklung eines kleinen Tools, um praktische Erfahrung in HTML, CSS und JavaScript zu vertiefen. Kleine Web-App zur Aufgabenverwaltung mit aufgeräumter Oberfläche (Productivity-Stil), FastAPI-Backend und lokaler JSON-Speicherung ohne Datenbank. Technologien: HTML5, CSS3, Python 3, JavaScript.",
+      "en": "Development of a small tool to deepen practical experience in HTML, CSS, and JavaScript. A lightweight task management web app with a clean productivity-style UI, FastAPI backend, and local JSON storage without a database. Technologies: HTML5, CSS3, Python 3, JavaScript.",
+      "fr": "Développement d'un petit outil pour approfondir l'expérience pratique en HTML, CSS et JavaScript. Application web de gestion de tâches avec interface épurée (style productivité), backend FastAPI et stockage JSON local sans base de données. Technologies : HTML5, CSS3, Python 3, JavaScript."
+    },
     "link": "",
     "demo_url": "https://taskflow-hw4z.onrender.com",
     "video_url": "",
@@ -25,8 +41,16 @@
   },
   {
     "id": 3,
-    "title": "Projekt 03 - Teamarbeit",
-    "description": "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung.Java: Programming language for the backend . Verwndete Technologien: Vert.x: Toolkit for building reactive applications on the JVM.MariaDB: Relational database management system.Docker: Platform for developing, shipping, and running applications in containers.MQTT: Lightweight messaging protocol for small sensors and mobile devices.Bootstrap: CSS framework for developing responsive and mobile-first websites.Arduino Uno/ESP32: Low-cost, low-power system on a chip microcontroller with integrated Wi-Fi and dual-mode Bluetooth.",
+    "title": {
+      "de": "Projekt 03 - Teamarbeit",
+      "en": "Project 03 - Team Project",
+      "fr": "Projet 03 - Travail en équipe"
+    },
+    "description": {
+      "de": "Zusammenarbeit in einem kleinen Team mit Fokus auf Planung, Kommunikation und sauberer Umsetzung. Backend in Java mit Vert.x, MariaDB, Docker, MQTT, Bootstrap sowie Arduino Uno/ESP32.",
+      "en": "Collaboration in a small team with a focus on planning, communication, and clean implementation. Backend in Java with Vert.x, MariaDB, Docker, MQTT, Bootstrap, and Arduino Uno/ESP32.",
+      "fr": "Collaboration au sein d'une petite équipe axée sur la planification, la communication et une mise en œuvre soignée. Backend en Java avec Vert.x, MariaDB, Docker, MQTT, Bootstrap et Arduino Uno/ESP32."
+    },
     "link": "",
     "demo_url": "",
     "video_url": "",
@@ -37,8 +61,16 @@
   },
   {
     "id": 4,
-    "title": "Projekt 04 - Personal Project E-commerce Website",
-    "description": "Jen's & Floran — E-Commerce-Plattform. Entwicklung eines vollständigen Online-Shops für eine Perücken-Marke mit mehrsprachiger Oberfläche (Deutsch, Französisch, Englisch), Produktkatalog, Warenkorb und sicherer PayPal-Zahlung. Frontend: Responsive Website mit HTML5, CSS3 und Vanilla JavaScript — ohne Framework, mit eigener i18n-Lösung, Supabase Auth (Registrierung, Login, Passwort-Reset) und clientseitigem Storage-Upload. Backend: REST-API mit Node.js und Express, Validierung mit Zod, JWT-Authentifizierung über Supabase, PayPal-Integration (Create & Capture Order) sowie E-Mail-Benachrichtigungen via Resend. Infrastruktur: Supabase (PostgreSQL, Row Level Security, Storage), Deployment auf Vercel (Frontend) und Render (Backend).",
+    "title": {
+      "de": "Projekt 04 - Personal Project E-commerce Website",
+      "en": "Project 04 - Personal E-commerce Website",
+      "fr": "Projet 04 - Site e-commerce personnel"
+    },
+    "description": {
+      "de": "Jen's & Floran — E-Commerce-Plattform. Entwicklung eines vollständigen Online-Shops für eine Perücken-Marke mit mehrsprachiger Oberfläche (Deutsch, Französisch, Englisch), Produktkatalog, Warenkorb und sicherer PayPal-Zahlung. Frontend: Responsive Website mit HTML5, CSS3 und Vanilla JavaScript — ohne Framework, mit eigener i18n-Lösung, Supabase Auth (Registrierung, Login, Passwort-Reset) und clientseitigem Storage-Upload. Backend: REST-API mit Node.js und Express, Validierung mit Zod, JWT-Authentifizierung über Supabase, PayPal-Integration (Create & Capture Order) sowie E-Mail-Benachrichtigungen via Resend. Infrastruktur: Supabase (PostgreSQL, Row Level Security, Storage), Deployment auf Vercel (Frontend) und Render (Backend).",
+      "en": "Jen's & Floran — e-commerce platform. Development of a full online shop for a wig brand with a multilingual interface (German, French, English), product catalog, shopping cart, and secure PayPal checkout. Frontend: responsive website with HTML5, CSS3, and vanilla JavaScript — no framework, custom i18n solution, Supabase Auth (sign-up, login, password reset), and client-side storage upload. Backend: REST API with Node.js and Express, Zod validation, JWT authentication via Supabase, PayPal integration (create & capture order), and email notifications via Resend. Infrastructure: Supabase (PostgreSQL, Row Level Security, storage), deployed on Vercel (frontend) and Render (backend).",
+      "fr": "Jen's & Floran — plateforme e-commerce. Développement d'une boutique en ligne complète pour une marque de perruques avec interface multilingue (allemand, français, anglais), catalogue produits, panier et paiement PayPal sécurisé. Frontend : site responsive en HTML5, CSS3 et JavaScript vanilla — sans framework, solution i18n maison, Supabase Auth (inscription, connexion, réinitialisation du mot de passe) et upload vers le storage côté client. Backend : API REST avec Node.js et Express, validation Zod, authentification JWT via Supabase, intégration PayPal (create & capture order) et notifications e-mail via Resend. Infrastructure : Supabase (PostgreSQL, Row Level Security, storage), déploiement sur Vercel (frontend) et Render (backend)."
+    },
     "link": "",
     "demo_url": "https://www.jens-flora.com",
     "video_url": "",

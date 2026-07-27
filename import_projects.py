@@ -9,6 +9,19 @@ DB_PATH = BASE_DIR / "portfolio.db"
 IN_PATH = BASE_DIR / "projects.json"
 
 
+def localized_text(value, lang="de"):
+    if isinstance(value, dict):
+        text = value.get(lang) or value.get("de") or next(iter(value.values()), "")
+        return str(text).strip()
+    return str(value or "").strip()
+
+
+def store_text(value):
+    if isinstance(value, dict):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value or "").strip()
+
+
 def import_projects_from_json(json_path=IN_PATH, db_path=DB_PATH):
     if not json_path.is_file():
         raise FileNotFoundError(f"{json_path} introuvable.")
@@ -26,8 +39,8 @@ def import_projects_from_json(json_path=IN_PATH, db_path=DB_PATH):
         for project in raw:
             if not isinstance(project, dict):
                 continue
-            title = str(project.get("title", "")).strip()
-            description = str(project.get("description", "")).strip()
+            title = localized_text(project.get("title", ""))
+            description = localized_text(project.get("description", ""))
             if not title or not description:
                 continue
             conn.execute(
@@ -38,8 +51,8 @@ def import_projects_from_json(json_path=IN_PATH, db_path=DB_PATH):
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    title,
-                    description,
+                    store_text(project.get("title", "")),
+                    store_text(project.get("description", "")),
                     str(project.get("link", "")).strip(),
                     str(project.get("demo_url", project.get("demoUrl", ""))).strip(),
                     str(project.get("video_url", project.get("videoUrl", ""))).strip(),

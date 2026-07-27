@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Projekte | Jenny Karelle Nanseu Tchatchouang</title>
+    <title data-i18n-title="meta.pageTitle">Projekte | Jenny Karelle Nanseu Tchatchouang</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,20 +16,32 @@
     <header class="header">
       <nav class="nav container">
         <a href="index.html#start" class="logo">Jenny Karelle</a>
-        <ul class="nav-links">
-          <li><a href="index.html#uber-mich">Uber mich</a></li>
-          <li><a href="index.html#dokumente">Dokumente</a></li>
-          <li><a href="projekte.html">Projekte</a></li>
-          <li><a href="index.html#kompetenzen">Kompetenzen</a></li>
-          <li><a href="index.html#kontakt">Kontakt</a></li>
-        </ul>
+        <div class="nav-end">
+          <ul class="nav-links">
+            <li><a href="index.html#uber-mich" data-i18n="nav.about">Über mich</a></li>
+            <li><a href="index.html#dokumente" data-i18n="nav.documents">Dokumente</a></li>
+            <li><a href="projekte.html" data-i18n="nav.projects">Projekte</a></li>
+            <li><a href="index.html#kompetenzen" data-i18n="nav.skills">Kompetenzen</a></li>
+            <li><a href="index.html#kontakt" data-i18n="nav.contact">Kontakt</a></li>
+          </ul>
+          <div
+            class="lang-switch"
+            role="group"
+            data-i18n-aria="projectsPage.languageLabel"
+            aria-label="Sprache wählen"
+          >
+            <button type="button" class="lang-switch__btn" data-lang="de">DE</button>
+            <button type="button" class="lang-switch__btn" data-lang="en">EN</button>
+            <button type="button" class="lang-switch__btn" data-lang="fr">FR</button>
+          </div>
+        </div>
       </nav>
     </header>
 
     <main>
       <section class="section container projects-page">
-        <h2>Projekte und Realisationen</h2>
-        <p>
+        <h2 data-i18n="projectsPage.heading">Projekte und Realisationen</h2>
+        <p data-i18n="projectsPage.intro">
           Diese Liste wird automatisch nach Upload-Datum sortiert (neueste
           zuerst). Die Inhalte werden manuell im Projekt gepflegt.
         </p>
@@ -37,15 +49,23 @@
 
         <div id="projects-list" class="cards"></div>
 
-        <a class="btn" href="index.html#start">Zuruck zur Startseite</a>
+        <a class="btn" href="index.html#start" data-i18n="projectsPage.backHome">Zurück zur Startseite</a>
       </section>
     </main>
 
     <footer class="footer">
-      <p>&copy; 2026 Jenny Karelle Nanseu Tchatchouang. Alle Rechte vorbehalten.</p>
+      <p data-i18n="footer.copyright">&copy; 2026 Jenny Karelle Nanseu Tchatchouang. Alle Rechte vorbehalten.</p>
     </footer>
+    <script src="i18n.js"></script>
     <script>
       let projectsCache = [];
+      let loadFailed = false;
+
+      const DATE_LOCALES = {
+        de: "de-DE",
+        en: "en-GB",
+        fr: "fr-FR",
+      };
 
       function readProjects() {
         return projectsCache;
@@ -59,6 +79,16 @@
         el.innerHTML = html;
         el.classList.toggle("projects-server-hint--error", Boolean(asError));
         el.hidden = !html;
+      }
+
+      function showLoadError() {
+        loadFailed = true;
+        setServerHint(I18n.t("projectsPage.loadError"), true);
+        const list = document.getElementById("projects-list");
+        if (list) {
+          list.innerHTML =
+            '<p class="project-date">' + escapeHtml(I18n.t("projectsPage.retryLater")) + "</p>";
+        }
       }
 
       async function loadProjectsFromApi() {
@@ -80,7 +110,7 @@
       }
 
       async function loadProjects() {
-        const list = document.getElementById("projects-list");
+        loadFailed = false;
         setServerHint("", false);
         try {
           projectsCache = await loadProjectsFromApi();
@@ -89,11 +119,7 @@
             projectsCache = await loadProjectsFromJson();
           } catch (_jsonError) {
             projectsCache = [];
-            setServerHint("Projekte konnten gerade nicht geladen werden.", true);
-            if (list) {
-              list.innerHTML =
-                '<p class="project-date">Bitte versuche es spater erneut.</p>';
-            }
+            showLoadError();
             return;
           }
         }
@@ -102,7 +128,8 @@
 
       function formatDate(dateIso) {
         const date = new Date(dateIso);
-        return date.toLocaleDateString("de-DE", {
+        const locale = DATE_LOCALES[I18n.lang] || "de-DE";
+        return date.toLocaleDateString(locale, {
           year: "numeric",
           month: "long",
           day: "numeric",
@@ -118,6 +145,23 @@
           .replaceAll("'", "&#39;");
       }
 
+      function normalizeLocalizedField(value) {
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          if (trimmed.startsWith("{")) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (parsed && typeof parsed === "object") {
+                return parsed;
+              }
+            } catch (_error) {
+              /* plain string */
+            }
+          }
+        }
+        return value;
+      }
+
       function normalizeProjects(rows) {
         if (!Array.isArray(rows)) {
           return [];
@@ -127,8 +171,8 @@
             project.id != null ? project.id : project.uploadedAt || String(Math.random());
           return {
             id: String(baseId),
-            title: project.title || "",
-            description: project.description || "",
+            title: normalizeLocalizedField(project.title || ""),
+            description: normalizeLocalizedField(project.description || ""),
             link: project.link || "",
             demoUrl: project.demo_url || project.demoUrl || "",
             videoUrl: project.video_url || project.videoUrl || "",
@@ -143,26 +187,37 @@
       function renderProjects() {
         const list = document.getElementById("projects-list");
         if (!list) return;
+
+        if (loadFailed) {
+          showLoadError();
+          return;
+        }
+
         const projects = readProjects()
           .slice()
           .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
 
         list.innerHTML = projects
           .map((project) => {
+            const title = I18n.pickLocalized(project.title);
+            const description = I18n.pickLocalized(project.description);
             const imageSource = project.imageDataUrl || project.imageSrc || "";
-            const safeTitle = escapeHtml(project.title || "");
-            const safeDescription = escapeHtml(project.description || "");
+            const safeTitle = escapeHtml(title);
+            const safeDescription = escapeHtml(description);
+            const imageAlt = escapeHtml(I18n.t("projectsPage.imageAlt", { title }));
             const safeImage = imageSource
               ? '<img class="project-image" src="' +
                 escapeHtml(imageSource) +
-                '" alt="Projektbild von ' +
-                safeTitle +
+                '" alt="' +
+                imageAlt +
                 '">'
               : "";
             const safeLink = project.link
               ? '<p><a class="project-link" href="' +
                 escapeHtml(project.link) +
-                '" target="_blank" rel="noopener noreferrer">Projekt ansehen</a></p>'
+                '" target="_blank" rel="noopener noreferrer">' +
+                escapeHtml(I18n.t("projectsPage.viewProject")) +
+                "</a></p>"
               : "";
             const hasDemo = Boolean(project.demoUrl);
             const hasGithub = Boolean(project.githubUrl);
@@ -170,7 +225,9 @@
               '<div class="project-menu-wrapper">' +
               '<button class="project-menu-toggle" type="button" data-action="toggle-menu" data-id="' +
               escapeHtml(project.id) +
-              '" aria-label="Projektmenu">...</button>' +
+              '" aria-label="' +
+              escapeHtml(I18n.t("projectsPage.menuLabel")) +
+              '">...</button>' +
               '<div class="project-menu" id="menu-' +
               escapeHtml(project.id) +
               '" hidden>' +
@@ -178,11 +235,15 @@
               escapeHtml(project.id) +
               '" ' +
               (hasDemo ? "" : "disabled") +
-              ">Live Demo</button>" +
+              ">" +
+              escapeHtml(I18n.t("projectsPage.liveDemo")) +
+              "</button>" +
               (hasGithub
                 ? '<button type="button" class="project-menu-item" data-action="github" data-id="' +
                   escapeHtml(project.id) +
-                  '">Github</button>'
+                  '">' +
+                  escapeHtml(I18n.t("projectsPage.github")) +
+                  "</button>"
                 : "") +
               "</div>" +
               "</div>";
@@ -191,9 +252,15 @@
               '<article class="card">' +
               safeImage +
               menu +
-              "<h3>" + safeTitle + "</h3>" +
-              "<p>" + safeDescription + "</p>" +
-              '<p class="project-date">Hochgeladen am: ' +
+              "<h3>" +
+              safeTitle +
+              "</h3>" +
+              "<p>" +
+              safeDescription +
+              "</p>" +
+              '<p class="project-date">' +
+              escapeHtml(I18n.t("projectsPage.uploadedOn")) +
+              " " +
               formatDate(project.uploadedAt) +
               "</p>" +
               safeLink +
@@ -269,7 +336,22 @@
         });
       }
 
+      function initLanguageSwitcher() {
+        document.querySelectorAll(".lang-switch__btn").forEach((button) => {
+          if (!(button instanceof HTMLButtonElement)) return;
+          button.addEventListener("click", async function () {
+            const lang = button.dataset.lang;
+            if (!lang || lang === I18n.lang) return;
+            await I18n.setLanguage(lang);
+            renderProjects();
+          });
+        });
+      }
+
       (async function bootstrap() {
+        await I18n.init();
+        I18n.apply();
+        initLanguageSwitcher();
         await loadProjects();
         initProjectMenus();
       })();

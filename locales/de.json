@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "pageTitle": "Projekte | Jenny Karelle Nanseu Tchatchouang"
+  },
+  "nav": {
+    "about": "Über mich",
+    "documents": "Dokumente",
+    "projects": "Projekte",
+    "skills": "Kompetenzen",
+    "contact": "Kontakt"
+  },
+  "projectsPage": {
+    "heading": "Projekte und Realisationen",
+    "intro": "Diese Liste wird automatisch nach Upload-Datum sortiert (neueste zuerst). Die Inhalte werden manuell im Projekt gepflegt.",
+    "languageLabel": "Sprache wählen",
+    "backHome": "Zurück zur Startseite",
+    "uploadedOn": "Hochgeladen am:",
+    "viewProject": "Projekt ansehen",
+    "liveDemo": "Live Demo",
+    "github": "Github",
+    "menuLabel": "Projektmenü",
+    "imageAlt": "Projektbild von {{title}}",
+    "loadError": "Projekte konnten gerade nicht geladen werden.",
+    "retryLater": "Bitte versuche es später erneut."
+  },
+  "footer": {
+    "copyright": "© 2026 Jenny Karelle Nanseu Tchatchouang. Alle Rechte vorbehalten."
+  }
+}
